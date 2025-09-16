@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy to EC2 (Alternative)
 
 on:
   push:
@@ -15,34 +15,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup SSH
-        run: |
-          # Create SSH directory
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          
-          # Create SSH private key file
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          
-          # Verify key format and fix potential issues
-          if ! ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null 2>&1; then
-            echo "SSH key validation failed, attempting to fix format..."
-            # Remove any Windows line endings and ensure proper format
-            sed -i 's/\r$//' ~/.ssh/id_rsa
-            # Ensure the key has proper newlines
-            if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/id_rsa; then
-              echo "ERROR: SSH key doesn't appear to be in correct format"
-              exit 1
-            fi
-          fi
-          
-          # Add EC2 to known hosts
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-          
-          # Start SSH agent and add key
-          eval $(ssh-agent -s)
-          ssh-add ~/.ssh/id_rsa
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          name: id_rsa
+          known_hosts: unnecessary
+          if_key_exists: replace
+
+      - name: Adding Known Hosts
+        run: ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy to EC2
         run: |
