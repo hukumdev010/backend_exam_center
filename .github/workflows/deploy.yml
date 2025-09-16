@@ -58,7 +58,7 @@ jobs:
 
           # Add EC2 to known hosts
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-          
+
           echo "SSH setup completed - using direct key file access"
 
       - name: Debug Secrets
@@ -75,7 +75,7 @@ jobs:
             exit 1
           fi
           echo "Secrets appear to be set"
-          
+
           # Additional debug - check if secrets are actually accessible
           echo "EC2_HOST value check: ${EC2_HOST:-'MISSING'}"
           echo "EC2_USER value check: ${EC2_USER:-'MISSING'}"
@@ -88,7 +88,7 @@ jobs:
       - name: Fix SSH Key Format
         run: |
           echo "Checking and fixing SSH key format..."
-          
+
           # Check if key validation fails and fix it
           if ! ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null 2>&1; then
             echo "Key validation failed, attempting to fix..."
@@ -116,7 +116,7 @@ jobs:
           else
             echo "✅ Key is already valid"
           fi
-          
+
           # Show final key info
           echo "Final key fingerprint:"
           ssh-keygen -l -f ~/.ssh/id_rsa
@@ -130,12 +130,12 @@ jobs:
       - name: Test SSH Connection
         run: |
           echo "Testing SSH connection to ubuntu@13.219.66.17"
-          
+
           # Debug key file status
           echo "Key file permissions:"
           ls -la ~/.ssh/id_rsa
           echo "Key file size: $(wc -c < ~/.ssh/id_rsa) bytes"
-          
+
           # Test key validity
           echo "Testing key validity:"
           if ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null 2>&1; then
@@ -148,7 +148,7 @@ jobs:
             head -n1 ~/.ssh/id_rsa
             tail -n1 ~/.ssh/id_rsa
           fi
-          
+
           # Test connection using hardcoded values (until secrets are fixed)
           echo "Attempting SSH connection:"
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@13.219.66.17 "echo 'SSH test successful - $(whoami)@$(hostname)'"
@@ -156,12 +156,32 @@ jobs:
       - name: Deploy to EC2
         run: |
           echo "Connecting to ubuntu@13.219.66.17"
-          
-          # Create deployment script
-          cat > deploy_script.sh << 'SCRIPT_EOF'
+
+          # Create the deployment script with GitHub SSH key
+          cat > deploy_full.sh << 'DEPLOY_EOF'
             set -e
             
             echo "=== Starting deployment ==="
+            
+            # Set up SSH key for GitHub access if not already exists
+            if [ ! -f ~/.ssh/github_key ]; then
+              echo "Setting up GitHub SSH key..."
+              echo "$GITHUB_SSH_KEY" > ~/.ssh/github_key
+              chmod 600 ~/.ssh/github_key
+              
+              # Add GitHub to known hosts
+              ssh-keyscan github.com >> ~/.ssh/known_hosts
+              
+              # Configure SSH to use the key for GitHub
+              cat >> ~/.ssh/config << SSH_CONFIG
+          Host github.com
+              HostName github.com
+              User git
+              IdentityFile ~/.ssh/github_key
+              StrictHostKeyChecking no
+          SSH_CONFIG
+              chmod 600 ~/.ssh/config
+            fi
             
             # Navigate to application directory
             cd /var/www/backend_exam_center || {
@@ -181,6 +201,8 @@ jobs:
               git reset --hard origin/master
             fi
             
+            echo "=== Code sync completed from private repository ==="
+            
             echo "=== Setting up Python environment ==="
             
             # Install Python 3.11 if not present
@@ -190,17 +212,24 @@ jobs:
               sudo apt install -y python3.11 python3.11-venv python3.11-dev
             fi
             
+            # Navigate to backend directory for Python setup
+            cd backend || {
+              echo "Backend directory not found, we're already in the root directory"
+              # If we're in the root of the backend repo, no need to change directory
+              if [ ! -f "main.py" ] && [ ! -f "requirements.txt" ]; then
+                echo "ERROR: This doesn't appear to be the backend directory"
+                exit 1
+              fi
+            }
+            
             # Create virtual environment
-            if [ ! -d "backend/venv" ]; then
+            if [ ! -d "venv" ]; then
               echo "Creating virtual environment..."
-              cd backend
               python3.11 -m venv venv
-              cd ..
             fi
             
             # Activate virtual environment and install dependencies
             echo "Installing dependencies..."
-            cd backend
             source venv/bin/activate
             pip install --upgrade pip
             pip install -r requirements.txt
@@ -222,9 +251,9 @@ jobs:
           [Service]
           Type=simple
           User=ubuntu
-          WorkingDirectory=/var/www/backend_exam_center/backend
-          Environment="PATH=/var/www/backend_exam_center/backend/venv/bin"
-          ExecStart=/var/www/backend_exam_center/backend/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+          WorkingDirectory=/var/www/backend_exam_center
+          Environment="PATH=/var/www/backend_exam_center/venv/bin"
+          ExecStart=/var/www/backend_exam_center/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
           Restart=always
           RestartSec=10
 
@@ -248,11 +277,14 @@ jobs:
             sudo systemctl status nginx --no-pager
             
             echo "=== Deployment completed successfully ==="
-          SCRIPT_EOF
-          
-          # Upload and execute the script
-          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no deploy_script.sh ubuntu@13.219.66.17:~/deploy_script.sh
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@13.219.66.17 "chmod +x ~/deploy_script.sh && ~/deploy_script.sh"
+          DEPLOY_EOF
+
+          # Upload and execute the deployment script with environment variables
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no deploy_full.sh ubuntu@13.219.66.17:~/deploy_full.sh
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@13.219.66.17 "
+            export GITHUB_SSH_KEY='${{ secrets.GITHUB_DEPLOY_KEY }}'
+            chmod +x ~/deploy_full.sh && ~/deploy_full.sh
+          "
 
       - name: Health Check
         run: |
