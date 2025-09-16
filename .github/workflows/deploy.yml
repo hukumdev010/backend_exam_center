@@ -1,0 +1,132 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+
+      - name: Add EC2 to known hosts
+        run: |
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            
+            echo "=== Starting deployment ==="
+            
+            # Navigate to application directory
+            cd /var/www/backend_exam_center || {
+              echo "Creating application directory..."
+              sudo mkdir -p /var/www/backend_exam_center
+              sudo chown $USER:$USER /var/www/backend_exam_center
+              cd /var/www/backend_exam_center
+            }
+            
+            # Clone or update repository
+            if [ ! -d ".git" ]; then
+              echo "Cloning repository..."
+              git clone git@github.com:hukumdev010/backend_exam_center.git .
+            else
+              echo "Updating repository..."
+              git fetch origin
+              git reset --hard origin/master
+            fi
+            
+            echo "=== Setting up Python environment ==="
+            
+            # Install Python 3.11 if not present
+            if ! command -v python3.11 &> /dev/null; then
+              echo "Installing Python 3.11..."
+              sudo apt update
+              sudo apt install -y python3.11 python3.11-venv python3.11-dev
+            fi
+            
+            # Create virtual environment
+            if [ ! -d "backend/venv" ]; then
+              echo "Creating virtual environment..."
+              cd backend
+              python3.11 -m venv venv
+              cd ..
+            fi
+            
+            # Activate virtual environment and install dependencies
+            echo "Installing dependencies..."
+            cd backend
+            source venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            
+            echo "=== Running database migrations ==="
+            # Run Alembic migrations
+            alembic upgrade head || echo "No migrations to run"
+            
+            echo "=== Restarting services ==="
+            
+            # Create systemd service file if it doesn't exist
+            if [ ! -f "/etc/systemd/system/exam-center-backend.service" ]; then
+              echo "Creating systemd service..."
+              sudo tee /etc/systemd/system/exam-center-backend.service > /dev/null << 'SERVICE_EOF'
+          [Unit]
+          Description=Exam Center FastAPI Backend
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=ubuntu
+          WorkingDirectory=/var/www/backend_exam_center/backend
+          Environment="PATH=/var/www/backend_exam_center/backend/venv/bin"
+          ExecStart=/var/www/backend_exam_center/backend/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+          Restart=always
+          RestartSec=10
+
+          [Install]
+          WantedBy=multi-user.target
+          SERVICE_EOF
+              
+              sudo systemctl daemon-reload
+              sudo systemctl enable exam-center-backend
+            fi
+            
+            # Restart the service
+            sudo systemctl restart exam-center-backend
+            
+            # Wait a moment and check status
+            sleep 5
+            sudo systemctl status exam-center-backend --no-pager
+            
+            echo "=== Restarting Nginx ==="
+            sudo systemctl restart nginx
+            sudo systemctl status nginx --no-pager
+            
+            echo "=== Deployment completed successfully ==="
+          EOF
+
+      - name: Health Check
+        run: |
+          echo "Waiting for application to start..."
+          sleep 10
+
+          # Check if the application is responding
+          curl -f -s "http://${{ secrets.EC2_HOST }}:8000/docs" > /dev/null || {
+            echo "Health check failed - application may not be responding"
+            exit 1
+          }
+
+          echo "✅ Application is responding successfully"
