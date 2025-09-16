@@ -116,8 +116,11 @@ jobs:
           ssh-keygen -l -f ~/.ssh/id_rsa
 
       - name: Test SSH Connection
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
         run: |
-          echo "Testing SSH connection..."
+          echo "Testing SSH connection to $EC2_USER@$EC2_HOST"
           
           # Debug key file status
           echo "Key file permissions:"
@@ -138,12 +141,15 @@ jobs:
           fi
           
           # Test connection using the key file directly
-          echo "Attempting SSH connection with verbose output:"
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -v "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" "echo 'SSH test successful - $(whoami)@$(hostname)'" || echo "SSH connection failed"
+          echo "Attempting SSH connection:"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$EC2_USER@$EC2_HOST" "echo 'SSH test successful - $(whoami)@$(hostname)'" || echo "SSH connection failed"
 
       - name: Deploy to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
         run: |
-          echo "Connecting to ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          echo "Connecting to $EC2_USER@$EC2_HOST"
           
           # Create deployment script
           cat > deploy_script.sh << 'SCRIPT_EOF'
@@ -239,16 +245,18 @@ jobs:
           SCRIPT_EOF
           
           # Upload and execute the script
-          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no deploy_script.sh "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/deploy_script.sh"
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" "chmod +x ~/deploy_script.sh && ~/deploy_script.sh"
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no deploy_script.sh "$EC2_USER@$EC2_HOST:~/deploy_script.sh"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$EC2_USER@$EC2_HOST" "chmod +x ~/deploy_script.sh && ~/deploy_script.sh"
 
       - name: Health Check
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
           echo "Waiting for application to start..."
           sleep 10
 
           # Check if the application is responding
-          curl -f -s "http://${{ secrets.EC2_HOST }}:8000/docs" > /dev/null || {
+          curl -f -s "http://$EC2_HOST:8000/docs" > /dev/null || {
             echo "Health check failed - application may not be responding"
             exit 1
           }
