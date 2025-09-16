@@ -25,6 +25,13 @@ jobs:
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
+          # Debug: Check key file
+          echo "SSH key file size: $(wc -c < ~/.ssh/id_rsa) bytes"
+          echo "SSH key starts with:"
+          head -1 ~/.ssh/id_rsa
+          echo "SSH key ends with:"
+          tail -1 ~/.ssh/id_rsa
+
           # Verify key format and fix potential issues
           if ! ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null 2>&1; then
             echo "SSH key validation failed, attempting to fix format..."
@@ -35,7 +42,19 @@ jobs:
               echo "ERROR: SSH key doesn't appear to be in correct format"
               exit 1
             fi
+            # Try validation again after fixing
+            if ! ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null 2>&1; then
+              echo "ERROR: SSH key is still invalid after attempting fixes"
+              exit 1
+            fi
+            echo "SSH key fixed and validated successfully"
+          else
+            echo "SSH key validation successful"
           fi
+
+          # Generate and show public key fingerprint for verification
+          echo "SSH key fingerprint:"
+          ssh-keygen -l -f ~/.ssh/id_rsa
 
           # Add EC2 to known hosts
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
@@ -43,6 +62,10 @@ jobs:
           # Start SSH agent and add key
           eval $(ssh-agent -s)
           ssh-add ~/.ssh/id_rsa
+          
+          # Verify key was added to agent
+          echo "Keys in SSH agent:"
+          ssh-add -l
 
       - name: Debug Secrets
         run: |
