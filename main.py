@@ -9,10 +9,8 @@ from database import init_db
 from routes import include_routers
 from settings.loader import get_settings
 
-# Load environment variables
+# Load environment variables initially
 load_dotenv()
-
-print("Environment variables loaded", os.environ.get("GEMINI_API"))
 
 # Database setup
 
@@ -22,6 +20,7 @@ async def lifespan(app: FastAPI):
     # Startup - Initialize settings and database
     settings = await get_settings()
     print(f"Starting application in {settings.environment} mode")
+    print(f"GEMINI_API loaded: {settings.gemini_api_key[:10]}..." if settings.gemini_api_key else "GEMINI_API not loaded")
     await init_db()
     yield
     # Shutdown - SQLAlchemy handles cleanup automatically

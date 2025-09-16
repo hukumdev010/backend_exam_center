@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 
-from auth import get_optional_user
+from modules.auth import get_optional_user
 from database import get_db
 from models import Certification as CertificationModel
 from models import Question as QuestionModel

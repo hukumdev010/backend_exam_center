@@ -163,43 +163,21 @@ jobs:
             
             echo "=== Starting deployment ==="
             
-            # Set up SSH key for GitHub access if not already exists
-            if [ ! -f ~/.ssh/github_key ]; then
-              echo "Setting up GitHub SSH key..."
-              echo "$GITHUB_SSH_KEY" > ~/.ssh/github_key
-              chmod 600 ~/.ssh/github_key
-              
-              # Add GitHub to known hosts
-              ssh-keyscan github.com >> ~/.ssh/known_hosts
-              
-              # Configure SSH to use the key for GitHub
-              cat >> ~/.ssh/config << SSH_CONFIG
-          Host github.com
-              HostName github.com
-              User git
-              IdentityFile ~/.ssh/github_key
-              StrictHostKeyChecking no
-          SSH_CONFIG
-              chmod 600 ~/.ssh/config
-            fi
-            
-            # Navigate to application directory
+            # Navigate to application directory (repository should already be cloned)
             cd /var/www/backend_exam_center || {
-              echo "Creating application directory..."
-              sudo mkdir -p /var/www/backend_exam_center
-              sudo chown $USER:$USER /var/www/backend_exam_center
-              cd /var/www/backend_exam_center
+              echo "ERROR: Application directory not found!"
+              echo "Please manually clone the repository first:"
+              echo "sudo mkdir -p /var/www/backend_exam_center"
+              echo "sudo chown \$USER:\$USER /var/www/backend_exam_center"
+              echo "cd /var/www/backend_exam_center"
+              echo "git clone git@github.com:hukumdev010/backend_exam_center.git ."
+              exit 1
             }
             
-            # Clone or update repository
-            if [ ! -d ".git" ]; then
-              echo "Cloning repository..."
-              git clone git@github.com:hukumdev010/backend_exam_center.git .
-            else
-              echo "Updating repository..."
-              git fetch origin
-              git reset --hard origin/master
-            fi
+            # Pull latest changes
+            echo "Pulling latest changes..."
+            git fetch origin
+            git reset --hard origin/master
             
             echo "=== Code sync completed from private repository ==="
             
@@ -279,10 +257,9 @@ jobs:
             echo "=== Deployment completed successfully ==="
           DEPLOY_EOF
 
-          # Upload and execute the deployment script with environment variables
+          # Upload and execute the deployment script
           scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no deploy_full.sh ubuntu@13.219.66.17:~/deploy_full.sh
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@13.219.66.17 "
-            export GITHUB_SSH_KEY='${{ secrets.GITHUB_DEPLOY_KEY }}'
             chmod +x ~/deploy_full.sh && ~/deploy_full.sh
           "
 
