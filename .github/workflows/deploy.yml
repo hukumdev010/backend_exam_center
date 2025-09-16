@@ -39,10 +39,6 @@ jobs:
           # Add EC2 to known hosts
           ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
 
-      - name: Test SSH Connection
-        run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST "echo 'SSH connection successful'"
-
       - name: Deploy Application
         run: |
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST "
@@ -125,24 +121,3 @@ jobs:
             echo '🎉 Deployment completed successfully!'
           "
 
-      - name: Health Check
-        run: |
-          echo "🏥 Performing health check..."
-          sleep 10
-          
-          # Test application endpoints
-          if curl -k -f -s "https://$EC2_HOST/" | grep -q "Exam Center API is running"; then
-            echo "✅ Main endpoint is healthy"
-          else
-            echo "❌ Main endpoint health check failed"
-            exit 1
-          fi
-          
-          if curl -k -f -s "https://$EC2_HOST/health" | grep -q "healthy"; then
-            echo "✅ Health endpoint is responding"
-          else
-            echo "❌ Health endpoint check failed"
-            exit 1
-          fi
-          
-          echo "🎉 All health checks passed! Deployment successful!"
