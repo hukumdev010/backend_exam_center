@@ -20,11 +20,11 @@ jobs:
           # Create SSH directory
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          
+
           # Create SSH private key file
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          
+
           # Verify key format and fix potential issues
           if ! ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null 2>&1; then
             echo "SSH key validation failed, attempting to fix format..."
@@ -36,16 +36,17 @@ jobs:
               exit 1
             fi
           fi
-          
+
           # Add EC2 to known hosts
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-          
+
           # Start SSH agent and add key
           eval $(ssh-agent -s)
           ssh-add ~/.ssh/id_rsa
 
       - name: Deploy to EC2
         run: |
+          echo "Connecting to ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e
             
