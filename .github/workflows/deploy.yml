@@ -1,277 +1,148 @@
-name: Deploy to EC2
+name: Deploy Exam Center to EC2
 
 on:
   push:
-    branches:
-      - master
-      - main
+    branches: [master, main]
   workflow_dispatch:
+
+env:
+  EC2_HOST: 13.219.66.17
+  EC2_USER: ubuntu
+  APP_DIR: /var/www/backend_exam_center
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup SSH
         run: |
-          # Create SSH directory
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-
-          # Create SSH private key file
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
-          # Debug: Check key file
-          echo "SSH key file size: $(wc -c < ~/.ssh/id_rsa) bytes"
-          echo "SSH key starts with:"
-          head -1 ~/.ssh/id_rsa
-          echo "SSH key ends with:"
-          tail -1 ~/.ssh/id_rsa
-
-          # Verify key format and fix potential issues
+          
+          # Validate SSH key
           if ! ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null 2>&1; then
-            echo "SSH key validation failed, attempting to fix format..."
-            # Remove any Windows line endings and ensure proper format
+            echo "Fixing SSH key format..."
             sed -i 's/\r$//' ~/.ssh/id_rsa
-            # Ensure the key has proper newlines
-            if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/id_rsa; then
-              echo "ERROR: SSH key doesn't appear to be in correct format"
-              exit 1
-            fi
-            # Try validation again after fixing
-            if ! ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null 2>&1; then
-              echo "ERROR: SSH key is still invalid after attempting fixes"
-              exit 1
-            fi
-            echo "SSH key fixed and validated successfully"
-          else
-            echo "SSH key validation successful"
-          fi
-
-          # Generate and show public key fingerprint for verification
-          echo "SSH key fingerprint:"
-          ssh-keygen -l -f ~/.ssh/id_rsa
-
-          # Add EC2 to known hosts
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-
-          echo "SSH setup completed - using direct key file access"
-
-      - name: Debug Secrets
-        run: |
-          echo "Debug: Checking secret values..."
-          echo "EC2_HOST length: ${#EC2_HOST}"
-          echo "EC2_USER length: ${#EC2_USER}"
-          if [ -z "$EC2_HOST" ]; then
-            echo "ERROR: EC2_HOST is empty"bn     
-            exit 1
-          fi
-          if [ -z "$EC2_USER" ]; then
-            echo "ERROR: EC2_USER is empty"
-            exit 1
-          fi
-          echo "Secrets appear to be set"
-
-          # Additional debug - check if secrets are actually accessible
-          echo "EC2_HOST value check: ${EC2_HOST:-'MISSING'}"
-          echo "EC2_USER value check: ${EC2_USER:-'MISSING'}"
-          echo "EC2_HOST length: ${#EC2_HOST}"
-          echo "EC2_USER length: ${#EC2_USER}"
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ${{ secrets.EC2_USER }}
-
-      - name: Fix SSH Key Format
-        run: |
-          echo "Checking and fixing SSH key format..."
-
-          # Check if key validation fails and fix it
-          if ! ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null 2>&1; then
-            echo "Key validation failed, attempting to fix..."
-            
-            # Remove any carriage returns and ensure proper format
-            sed -i 's/\r$//' ~/.ssh/id_rsa
-            
-            # Ensure proper newlines and format
-            if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/id_rsa; then
-              echo "ERROR: Key doesn't contain proper BEGIN marker"
-              head -n3 ~/.ssh/id_rsa
-              exit 1
-            fi
-            
-            # Set correct permissions
             chmod 600 ~/.ssh/id_rsa
-            
-            # Test again
             if ! ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null 2>&1; then
-              echo "ERROR: Key is still invalid after fixes"
+              echo "ERROR: Invalid SSH key"
               exit 1
             fi
-            
-            echo "✅ Key fixed successfully"
-          else
-            echo "✅ Key is already valid"
           fi
-
-          # Show final key info
-          echo "Final key fingerprint:"
-          ssh-keygen -l -f ~/.ssh/id_rsa
-
-      - name: Test SSH with Hardcoded Values
-        run: |
-          echo "Testing SSH connection with hardcoded values (for debugging)..."
-          echo "Attempting SSH connection to ubuntu@13.219.66.17"
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@13.219.66.17 "echo 'SSH test successful - $(whoami)@$(hostname)'" || echo "SSH connection failed"
+          
+          # Add EC2 to known hosts
+          ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
 
       - name: Test SSH Connection
         run: |
-          echo "Testing SSH connection to ubuntu@13.219.66.17"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST "echo 'SSH connection successful'"
 
-          # Debug key file status
-          echo "Key file permissions:"
-          ls -la ~/.ssh/id_rsa
-          echo "Key file size: $(wc -c < ~/.ssh/id_rsa) bytes"
-
-          # Test key validity
-          echo "Testing key validity:"
-          if ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null 2>&1; then
-            echo "✅ SSH key is valid"
-            echo "Public key fingerprint:"
-            ssh-keygen -l -f ~/.ssh/id_rsa
-          else
-            echo "❌ SSH key validation failed"
-            echo "Key file content (first and last lines):"
-            head -n1 ~/.ssh/id_rsa
-            tail -n1 ~/.ssh/id_rsa
-          fi
-
-          # Test connection using hardcoded values (until secrets are fixed)
-          echo "Attempting SSH connection:"
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@13.219.66.17 "echo 'SSH test successful - $(whoami)@$(hostname)'"
-
-      - name: Deploy to EC2
+      - name: Deploy Application
         run: |
-          echo "Connecting to ubuntu@13.219.66.17"
-
-          # Create the deployment script with GitHub SSH key
-          cat > deploy_full.sh << 'DEPLOY_EOF'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST "
             set -e
+            echo '🚀 Starting Exam Center deployment...'
             
-            echo "=== Starting deployment ==="
-            
-            # Navigate to application directory (repository should already be cloned)
-            cd /var/www/backend_exam_center || {
-              echo "ERROR: Application directory not found!"
-              echo "Please manually clone the repository first:"
-              echo "sudo mkdir -p /var/www/backend_exam_center"
-              echo "sudo chown \$USER:\$USER /var/www/backend_exam_center"
-              echo "cd /var/www/backend_exam_center"
-              echo "git clone git@github.com:hukumdev010/backend_exam_center.git ."
-              exit 1
-            }
+            # Navigate to application directory
+            cd $APP_DIR
             
             # Pull latest changes
-            echo "Pulling latest changes..."
+            echo '📥 Pulling latest code from GitHub...'
             git fetch origin
             git reset --hard origin/master
             
-            echo "=== Code sync completed from private repository ==="
-            
-            echo "=== Setting up Python environment ==="
-            
-            # Install Python 3.11 if not present
-            if ! command -v python3.11 &> /dev/null; then
-              echo "Installing Python 3.11..."
-              sudo apt update
-              sudo apt install -y python3.11 python3.11-venv python3.11-dev
-            fi
-            
-            # Navigate to backend directory for Python setup
-            cd backend || {
-              echo "Backend directory not found, we're already in the root directory"
-              # If we're in the root of the backend repo, no need to change directory
-              if [ ! -f "main.py" ] && [ ! -f "requirements.txt" ]; then
-                echo "ERROR: This doesn't appear to be the backend directory"
-                exit 1
-              fi
-            }
-            
-            # Create virtual environment
-            if [ ! -d "venv" ]; then
-              echo "Creating virtual environment..."
-              python3.11 -m venv venv
-            fi
-            
-            # Activate virtual environment and install dependencies
-            echo "Installing dependencies..."
+            # Activate virtual environment
+            echo '🐍 Setting up Python environment...'
             source venv/bin/activate
+            
+            # Install/update dependencies
+            echo '📦 Installing dependencies...'
             pip install --upgrade pip
             pip install -r requirements.txt
             
-            echo "=== Running database migrations ==="
-            # Run Alembic migrations
-            alembic upgrade head || echo "No migrations to run"
+            # Run database migrations
+            echo '🗃️ Running database migrations...'
+            PYTHONPATH=$APP_DIR alembic upgrade head
             
-            echo "=== Restarting services ==="
+            # Check if seeding is needed
+            echo '🌱 Checking if seeding is needed...'
+            SEED_CHECK=\$(PYTHONPATH=$APP_DIR python -c \"
+            import asyncio
+            from database import AsyncSessionLocal
+            from sqlalchemy import text
             
-            # Create systemd service file if it doesn't exist
-            if [ ! -f "/etc/systemd/system/exam-center-backend.service" ]; then
-              echo "Creating systemd service..."
-              sudo tee /etc/systemd/system/exam-center-backend.service > /dev/null << 'SERVICE_EOF'
-          [Unit]
-          Description=Exam Center FastAPI Backend
-          After=network.target
-
-          [Service]
-          Type=simple
-          User=ubuntu
-          WorkingDirectory=/var/www/backend_exam_center
-          Environment="PATH=/var/www/backend_exam_center/venv/bin"
-          ExecStart=/var/www/backend_exam_center/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
-          Restart=always
-          RestartSec=10
-
-          [Install]
-          WantedBy=multi-user.target
-          SERVICE_EOF
-              
-              sudo systemctl daemon-reload
-              sudo systemctl enable exam-center-backend
+            async def check_data():
+                async with AsyncSessionLocal() as session:
+                    result = await session.execute(text('SELECT COUNT(*) FROM categories'))
+                    count = result.scalar()
+                    return count > 0
+            
+            try:
+                has_data = asyncio.run(check_data())
+                print('true' if has_data else 'false')
+            except Exception:
+                print('false')
+            \" 2>/dev/null || echo 'false')
+            
+            if [ \"\$SEED_CHECK\" = \"false\" ]; then
+                echo '🌱 Running seed script...'
+                cd scripts && PYTHONPATH=$APP_DIR python seed.py && cd ..
+            else
+                echo '✅ Database already has data, skipping seeding'
             fi
             
-            # Restart the service
-            sudo systemctl restart exam-center-backend
+            # Restart application service
+            echo '🔄 Restarting application service...'
+            sudo systemctl restart exam-center.service
             
-            # Wait a moment and check status
+            # Wait for application to start
             sleep 5
-            sudo systemctl status exam-center-backend --no-pager
             
-            echo "=== Restarting Nginx ==="
-            sudo systemctl restart nginx
-            sudo systemctl status nginx --no-pager
+            # Reload Nginx
+            echo '🌐 Reloading Nginx...'
+            sudo systemctl reload nginx
             
-            echo "=== Deployment completed successfully ==="
-          DEPLOY_EOF
-
-          # Upload and execute the deployment script
-          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no deploy_full.sh ubuntu@13.219.66.17:~/deploy_full.sh
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@13.219.66.17 "
-            chmod +x ~/deploy_full.sh && ~/deploy_full.sh
+            # Verify services are running
+            echo '✅ Checking service status...'
+            if ! sudo systemctl is-active --quiet exam-center.service; then
+                echo '❌ Application service failed to start'
+                sudo systemctl status exam-center.service --no-pager
+                exit 1
+            fi
+            
+            if ! sudo systemctl is-active --quiet nginx; then
+                echo '❌ Nginx failed to start'
+                sudo systemctl status nginx --no-pager
+                exit 1
+            fi
+            
+            echo '🎉 Deployment completed successfully!'
           "
 
       - name: Health Check
         run: |
-          echo "Waiting for application to start..."
+          echo "🏥 Performing health check..."
           sleep 10
-
-          # Check if the application is responding
-          curl -f -s "http://13.219.66.17:8000/docs" > /dev/null || {
-            echo "Health check failed - application may not be responding"
+          
+          # Test application endpoints
+          if curl -k -f -s "https://$EC2_HOST/" | grep -q "Exam Center API is running"; then
+            echo "✅ Main endpoint is healthy"
+          else
+            echo "❌ Main endpoint health check failed"
             exit 1
-          }
-
-          echo "✅ Application is responding successfully"
+          fi
+          
+          if curl -k -f -s "https://$EC2_HOST/health" | grep -q "healthy"; then
+            echo "✅ Health endpoint is responding"
+          else
+            echo "❌ Health endpoint check failed"
+            exit 1
+          fi
+          
+          echo "🎉 All health checks passed! Deployment successful!"
