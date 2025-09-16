@@ -44,10 +44,28 @@ jobs:
           eval $(ssh-agent -s)
           ssh-add ~/.ssh/id_rsa
 
+      - name: Debug Secrets
+        run: |
+          echo "Debug: Checking secret values..."
+          echo "EC2_HOST length: ${#EC2_HOST}"
+          echo "EC2_USER length: ${#EC2_USER}"
+          if [ -z "$EC2_HOST" ]; then
+            echo "ERROR: EC2_HOST is empty"
+            exit 1
+          fi
+          if [ -z "$EC2_USER" ]; then
+            echo "ERROR: EC2_USER is empty"
+            exit 1
+          fi
+          echo "Secrets appear to be set"
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+
       - name: Deploy to EC2
         run: |
-          echo "Connecting to ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          echo "Connecting to $EC2_USER@$EC2_HOST"
+          ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
             set -e
             
             echo "=== Starting deployment ==="
@@ -138,6 +156,9 @@ jobs:
             
             echo "=== Deployment completed successfully ==="
           EOF
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
 
       - name: Health Check
         run: |
@@ -145,9 +166,11 @@ jobs:
           sleep 10
 
           # Check if the application is responding
-          curl -f -s "http://${{ secrets.EC2_HOST }}:8000/docs" > /dev/null || {
+          curl -f -s "http://$EC2_HOST:8000/docs" > /dev/null || {
             echo "Health check failed - application may not be responding"
             exit 1
           }
 
           echo "✅ Application is responding successfully"
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
