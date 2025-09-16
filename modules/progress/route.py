@@ -11,7 +11,7 @@ router = APIRouter()
 progress_controller = ProgressController()
 
 
-@router.get("/", response_model=List[UserProgress])
+@router.get("", response_model=List[UserProgress])
 async def get_user_progress(
     current_user: UserSession = Depends(get_current_user), db=Depends(get_db)
 ):
@@ -19,7 +19,7 @@ async def get_user_progress(
     return await progress_controller.get_user_progress(current_user, db)
 
 
-@router.post("/", response_model=UserProgress)
+@router.post("", response_model=UserProgress)
 async def update_user_progress(
     progress_data: ProgressUpdate,
     current_user: UserSession = Depends(get_current_user),

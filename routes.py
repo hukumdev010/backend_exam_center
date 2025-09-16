@@ -78,7 +78,10 @@ def register_system_routes(app: FastAPI) -> None:
 
     @app.get("/health")
     async def health_check():
-        return {"status": "healthy", "message": "API is operational and healthy"}
+        return {
+            "status": "healthy",
+            "message": "API is operational and healthy"
+        }
 
     @app.get("/api/config")
     async def get_config():

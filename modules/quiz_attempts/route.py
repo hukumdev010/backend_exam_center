@@ -9,7 +9,7 @@ router = APIRouter()
 quiz_attempt_controller = QuizAttemptController()
 
 
-@router.post("/", response_model=QuizAttempt)
+@router.post("", response_model=QuizAttempt)
 async def create_quiz_attempt(
     attempt_data: QuizAttemptCreate,
     current_user: UserSession = Depends(get_current_user),
