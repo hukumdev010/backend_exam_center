@@ -79,11 +79,67 @@ jobs:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
 
+      - name: Fix SSH Key Format
+        run: |
+          echo "Checking and fixing SSH key format..."
+          
+          # Check if key validation fails and fix it
+          if ! ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null 2>&1; then
+            echo "Key validation failed, attempting to fix..."
+            
+            # Remove any carriage returns and ensure proper format
+            sed -i 's/\r$//' ~/.ssh/id_rsa
+            
+            # Ensure proper newlines and format
+            if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/id_rsa; then
+              echo "ERROR: Key doesn't contain proper BEGIN marker"
+              head -n3 ~/.ssh/id_rsa
+              exit 1
+            fi
+            
+            # Set correct permissions
+            chmod 600 ~/.ssh/id_rsa
+            
+            # Test again
+            if ! ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null 2>&1; then
+              echo "ERROR: Key is still invalid after fixes"
+              exit 1
+            fi
+            
+            echo "✅ Key fixed successfully"
+          else
+            echo "✅ Key is already valid"
+          fi
+          
+          # Show final key info
+          echo "Final key fingerprint:"
+          ssh-keygen -l -f ~/.ssh/id_rsa
+
       - name: Test SSH Connection
         run: |
           echo "Testing SSH connection..."
+          
+          # Debug key file status
+          echo "Key file permissions:"
+          ls -la ~/.ssh/id_rsa
+          echo "Key file size: $(wc -c < ~/.ssh/id_rsa) bytes"
+          
+          # Test key validity
+          echo "Testing key validity:"
+          if ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null 2>&1; then
+            echo "✅ SSH key is valid"
+            echo "Public key fingerprint:"
+            ssh-keygen -l -f ~/.ssh/id_rsa
+          else
+            echo "❌ SSH key validation failed"
+            echo "Key file content (first and last lines):"
+            head -n1 ~/.ssh/id_rsa
+            tail -n1 ~/.ssh/id_rsa
+          fi
+          
           # Test connection using the key file directly
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" "echo 'SSH test successful - $(whoami)@$(hostname)'"
+          echo "Attempting SSH connection with verbose output:"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -v "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" "echo 'SSH test successful - $(whoami)@$(hostname)'" || echo "SSH connection failed"
 
       - name: Deploy to EC2
         run: |
