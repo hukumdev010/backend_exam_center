@@ -3,8 +3,8 @@ import os
 from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 
-from services.auth_service import AuthService
 from sessions import get_user_session, remove_user_session
+from .service import AuthService
 
 
 class AuthController:
@@ -74,4 +74,3 @@ class AuthController:
         """Logout user (invalidate token)"""
         # In a real app, you'd invalidate the session/token
         return {"message": "Logged out successfully"}
-    

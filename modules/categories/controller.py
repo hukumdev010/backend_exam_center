@@ -1,7 +1,7 @@
 from fastapi import Depends
 
 from database import get_db
-from services.category_service import CategoryService
+from .service import CategoryService
 
 
 class CategoryController:   
@@ -23,4 +23,3 @@ class CategoryController:
         return await self.category_service.get_category_certifications(
             db, category_slug, page, per_page
         )
-    

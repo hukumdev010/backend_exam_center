@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import Depends
 
 from database import get_db
-from services.certification_service import CertificationService
+from .service import CertificationService
 
 
 class CertificationController:

@@ -4,13 +4,9 @@ from urllib.parse import urlencode
 
 import httpx
 from fastapi import HTTPException
-from pydantic import BaseModel
 
 from sessions import set_user_session
-
-
-class GoogleAuthURL(BaseModel):
-    auth_url: str
+from .model import GoogleAuthURL
 
 
 class AuthService:
@@ -96,4 +92,3 @@ class AuthService:
         # Store in session
         set_user_session(session_token, user_data)
         return session_token
-

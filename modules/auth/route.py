@@ -1,27 +1,11 @@
 from fastapi import APIRouter, Query
 
-from controllers.auth_controller import AuthController
-from pydantic import BaseModel
+from .controller import AuthController
+from .model import GoogleAuthURL
 
 
 router = APIRouter()
 auth_controller = AuthController()
-
-
-class GoogleAuthURL(BaseModel):
-    auth_url: str
-
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-
-
-class UserInfo(BaseModel):
-    id: str
-    email: str
-    name: str
-    image: str
 
 
 @router.get("/me")
@@ -48,7 +32,7 @@ async def google_callback(code: str = None, error: str = None):
     return await auth_controller.google_callback(code, error)
 
 
-@router.post("/logout")
+@router.post("/logout/simple")
 async def logout_simple():
     """Logout user (invalidate token)"""
     return await auth_controller.logout_simple()
