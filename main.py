@@ -11,12 +11,6 @@ from settings.loader import get_settings
 # Load environment variables initially
 load_dotenv()
 
-# Database setup
-
-
-# Get CORS origins for configuration
-cors_origins = []
-
 
 async def get_cors_origins():
     settings = await get_settings()
@@ -34,7 +28,6 @@ async def get_cors_origins():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup - Initialize settings and database
-    global cors_origins
     await init_db()
     cors_origins = await get_cors_origins()
     print(f"CORS origins configured: {cors_origins}")
@@ -49,7 +42,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware - configured with proper origins
+# CORS middleware - configured with comprehensive origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -57,10 +50,14 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "https://eduneps.com",
         "https://www.eduneps.com",
+        "http://localhost:3001",  # Additional frontend port
+        "http://127.0.0.1:3001",
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    # Allow all eduneps subdomains
+    allow_origin_regex=r"https://.*\.eduneps\.com",
 )
 
 # Include routers

@@ -20,7 +20,9 @@ class SettingsWithSecrets:
         self._initialized = False
 
     async def initialize(self):
-        """Initialize settings with secrets from AWS Secrets Manager if enabled"""
+        """
+        Initialize settings with secrets from AWS Secrets Manager if enabled
+        """
         if self._initialized:
             return
         if (
@@ -28,7 +30,11 @@ class SettingsWithSecrets:
             or self._base_settings.environment == "production"
         ):
             print(
-                f"Initializing settings with AWS Secrets Manager (secret: {self._base_settings.secrets_manager_secret_name})"
+                (
+                    f"Initializing settings with AWS Secrets Manager "
+                    f"(secret: "
+                    f"{self._base_settings.secrets_manager_secret_name})"
+                )
             )
             self._secrets_cache = await self._secrets_manager.get_secret(
                 self._base_settings.secrets_manager_secret_name
@@ -37,7 +43,10 @@ class SettingsWithSecrets:
                 print("Successfully loaded secrets from AWS Secrets Manager")
             else:
                 print(
-                    "Failed to load secrets from AWS Secrets Manager, using environment variables"
+                    (
+                        "Failed to load secrets from AWS Secrets Manager, "
+                        "using environment variables"
+                    )
                 )
         self._initialized = True
 
