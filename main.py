@@ -29,8 +29,6 @@ async def get_cors_origins():
 async def lifespan(app: FastAPI):
     # Startup - Initialize settings and database
     await init_db()
-    cors_origins = await get_cors_origins()
-    print(f"CORS origins configured: {cors_origins}")
     yield
     # Shutdown - SQLAlchemy handles cleanup automatically
 

@@ -3,7 +3,7 @@
 
 from typing import Optional
 from pydantic import BaseModel
-from fastapi import HTTPException, Query
+from fastapi import HTTPException, Header
 
 from sessions import get_user_session
 
@@ -33,11 +33,26 @@ class UserSession(BaseModel):
         )
 
 
-async def get_current_user(token: str = Query(...)) -> UserSession:
+async def get_current_user(authorization: str = Header(None)) -> UserSession:
     """
-    Get current authenticated user from session token.
+    Get current authenticated user from Bearer token.
     Raises HTTPException if user is not authenticated.
     """
+    if not authorization:
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization header required"
+        )
+    
+    # Extract token from Bearer header
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authorization header format. "
+                   "Expected 'Bearer <token>'"
+        )
+    
+    token = authorization.replace("Bearer ", "", 1)
     user_data = get_user_session(token)
     if not user_data:
         raise HTTPException(
@@ -49,17 +64,21 @@ async def get_current_user(token: str = Query(...)) -> UserSession:
 
 
 async def get_optional_user(
-    token: Optional[str] = Query(None)
+    authorization: str = Header(None)
 ) -> Optional[UserSession]:
     """
-    Get current user from session token if provided and valid.
+    Get current user from Bearer token if provided and valid.
     Returns None if no token provided or token is invalid.
     Does not raise exceptions for invalid/missing auth.
     """
-    if not token:
+    if not authorization:
+        return None
+    
+    if not authorization.startswith("Bearer "):
         return None
     
     try:
+        token = authorization.replace("Bearer ", "", 1)
         user_data = get_user_session(token)
         if not user_data:
             return None
@@ -68,3 +87,45 @@ async def get_optional_user(
     except Exception:
         # If anything goes wrong, return None (don't raise)
         return None
+
+
+async def admin_required(authorization: str = Header(None)) -> dict:
+    """
+    Get current authenticated user and verify admin privileges.
+    Raises HTTPException if user is not authenticated or not an admin.
+    Returns user data as dict for backwards compatibility.
+    """
+    if not authorization:
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization header required"
+        )
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authorization header format. "
+                   "Expected 'Bearer <token>'"
+        )
+    
+    token = authorization.replace("Bearer ", "", 1)
+    user_data = get_user_session(token)
+    
+    if not user_data:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid session token"
+        )
+    
+    # Check if user has admin role - you may need to adjust this logic
+    # based on how admin privileges are stored in your system
+    is_admin = (user_data.get("is_admin", False) or
+                user_data.get("role") == "admin")
+    
+    if not is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Admin privileges required"
+        )
+    
+    return user_data

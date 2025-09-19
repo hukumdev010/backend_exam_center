@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Header, HTTPException
 
 from .controller import AuthController
 from .model import GoogleAuthURL
@@ -9,14 +9,28 @@ auth_controller = AuthController()
 
 
 @router.get("/me")
-async def get_current_user(token: str = Query(...)):
+async def get_current_user(authorization: str = Header(None)):
     """Get current user info from session"""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header required")
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+    
+    token = authorization.replace("Bearer ", "", 1)
     return await auth_controller.get_current_user(token)
 
 
 @router.post("/logout")
-async def logout(token: str = Query(...)):
+async def logout(authorization: str = Header(None)):
     """Logout user by removing session"""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header required")
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+    
+    token = authorization.replace("Bearer ", "", 1)
     return await auth_controller.logout(token)
 
 

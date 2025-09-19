@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from typing import List
 
 from auth import UserSession, get_current_user
 from database import get_db
@@ -18,4 +19,15 @@ async def create_quiz_attempt(
     """Save a completed quiz attempt"""
     return await quiz_attempt_controller.create_quiz_attempt(
         attempt_data.dict(), current_user, db
+    )
+
+
+@router.get("/recent", response_model=List[QuizAttempt])
+async def get_recent_quiz_attempts(
+    current_user: UserSession = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    """Get recent quiz attempts for the current user"""
+    return await quiz_attempt_controller.get_recent_attempts(
+        current_user, db
     )

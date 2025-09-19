@@ -12,6 +12,8 @@ from modules.certifications.route import router as certifications_router
 from modules.progress.route import router as progress_router
 from modules.quiz_attempts.route import router as quiz_attempts_router
 from modules.ai_assistant.route import router as ai_assistant_router
+from modules.teachers.route import router as teachers_router
+from modules.sessions.route import router as sessions_router
 from settings.loader import get_settings
 
 
@@ -60,10 +62,22 @@ def include_routers(app: FastAPI) -> None:
         tags=["ai-assistant"]
     )
     
+    # Teachers routes
+    app.include_router(
+        teachers_router,
+        prefix="/api/teachers",
+        tags=["teachers"]
+    )
+    
+    # Sessions routes
+    app.include_router(
+        sessions_router,
+        prefix="/api/sessions",
+        tags=["sessions"]
+    )
+
     # Health and system endpoints
     register_system_routes(app)
-
-
 def register_system_routes(app: FastAPI) -> None:
     """
     Register system-level routes like health checks and configuration.
@@ -112,5 +126,7 @@ __all__ = [
     "certifications_router",
     "progress_router",
     "quiz_attempts_router",
-    "ai_assistant_router"
+    "ai_assistant_router",
+    "teachers_router",
+    "sessions_router"
 ]
