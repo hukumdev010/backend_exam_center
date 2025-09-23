@@ -126,6 +126,39 @@ def load_all_certifications():
     ]
 
     for category_folder in category_folders:
+        # Handle nested structure (languages, academic)
+        if category_folder in ["languages", "academic"]:
+            print(f"  📁 Processing {category_folder} subfolder...")
+            category_path = os.path.join(certifications_root, category_folder)
+            subcategory_folders = [
+                f for f in os.listdir(category_path)
+                if os.path.isdir(os.path.join(category_path, f))
+                and not f.startswith("__")
+            ]
+            
+            for subcategory_folder in subcategory_folders:
+                try:
+                    # Try to load certifications from subcategory
+                    cert_file = os.path.join(
+                        category_path, subcategory_folder, "certifications.py"
+                    )
+                    if os.path.exists(cert_file):
+                        module_path = (f"seed_data.certifications.{category_folder}."
+                                     f"{subcategory_folder}.certifications")
+                        cert_module = importlib.import_module(module_path)
+                        
+                        if hasattr(cert_module, "CERTIFICATIONS"):
+                            all_certifications.extend(cert_module.CERTIFICATIONS)
+                            print(
+                                f"    📋 {subcategory_folder}: "
+                                f"{len(cert_module.CERTIFICATIONS)} certifications loaded"
+                            )
+                            
+                except ImportError as e:
+                    print(f"    ❌ Failed to load {subcategory_folder}: {e}")
+            continue
+            
+        # Handle existing IT category structure
         try:
             # Try to import the category module (organized structure)
             module_path = f"seed_data.certifications.{category_folder}"
@@ -242,9 +275,11 @@ async def seed_database():
 
     async with AsyncSessionLocal() as session:
         try:
-            # Create categories
+            # Create categories with hierarchy support
             print("📁 Creating categories...")
             category_map = {}
+            
+            # First pass: create all categories without parent relationships
             for category_data in CATEGORIES:
                 category = Category(
                     name=category_data["name"],
@@ -257,7 +292,18 @@ async def seed_database():
                 category_map[category_data["slug"]] = category
 
             await session.flush()  # To get category IDs
-            print(f"✅ Created {len(CATEGORIES)} categories")
+            
+            # Second pass: set parent relationships
+            for category_data in CATEGORIES:
+                if "parent_slug" in category_data:
+                    parent_slug = category_data["parent_slug"]
+                    if parent_slug in category_map:
+                        child_category = category_map[category_data["slug"]]
+                        parent_category = category_map[parent_slug]
+                        child_category.parent_id = parent_category.id
+            
+            await session.flush()  # Update parent relationships
+            print(f"✅ Created {len(CATEGORIES)} categories with hierarchy")
 
             # Create certifications
             print("📜 Creating certifications...")

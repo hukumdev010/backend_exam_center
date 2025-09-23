@@ -27,10 +27,15 @@ class Category(Base):
     slug = Column(String, unique=True, nullable=False)
     icon = Column(String, nullable=True)  # Icon name for UI
     color = Column(String, nullable=True)  # Color theme for UI
+    parent_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     # Relationships
+    parent = relationship(
+        "Category", remote_side=[id], back_populates="children"
+    )
+    children = relationship("Category", back_populates="parent")
     certifications = relationship("Certification", back_populates="category")
 
 

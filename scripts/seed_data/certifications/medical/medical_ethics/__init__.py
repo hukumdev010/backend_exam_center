@@ -1,0 +1,1 @@
+"""Medical Ethics module"""

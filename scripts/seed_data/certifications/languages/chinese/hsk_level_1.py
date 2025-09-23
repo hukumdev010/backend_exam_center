@@ -1,0 +1,195 @@
+"""HSK (Hanyu Shuiping Kaoshi) Level 1 Certification"""
+
+CERTIFICATION = {
+    "name": "HSK Level 1",
+    "description": "Basic Chinese proficiency for 150 most common words",
+    "slug": "hsk-level-1",
+    "level": "A1",
+    "duration": 40,
+    "questions_count": 15,
+    "category_slug": "chinese",
+    "is_active": True,
+}
+
+QUESTIONS = [
+    {
+        "text": "What does 你好 (nǐhǎo) mean?",
+        "explanation": "你好 (nǐhǎo) is the most common greeting in Chinese, meaning 'hello' or 'hi'.",
+        "reference": "HSK Level 1 Vocabulary",
+        "points": 1,
+        "answers": [
+            {"text": "Thank you", "is_correct": False},
+            {"text": "Hello", "is_correct": True},
+            {"text": "Goodbye", "is_correct": False},
+            {"text": "Excuse me", "is_correct": False},
+        ],
+    },
+    {
+        "text": "How do you say 'thank you' in Chinese?",
+        "explanation": "谢谢 (xièxie) is the standard way to say 'thank you' in Chinese.",
+        "reference": "HSK Level 1 Basic Expressions",
+        "points": 1,
+        "answers": [
+            {"text": "你好 (nǐhǎo)", "is_correct": False},
+            {"text": "谢谢 (xièxie)", "is_correct": True},
+            {"text": "再见 (zàijiàn)", "is_correct": False},
+            {"text": "对不起 (duìbuqǐ)", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is the meaning of 我 (wǒ)?",
+        "explanation": "我 (wǒ) is the first-person singular pronoun meaning 'I' or 'me'.",
+        "reference": "HSK Level 1 Personal Pronouns",
+        "points": 1,
+        "answers": [
+            {"text": "You", "is_correct": False},
+            {"text": "He/She", "is_correct": False},
+            {"text": "I/Me", "is_correct": True},
+            {"text": "We", "is_correct": False},
+        ],
+    },
+    {
+        "text": "How do you say 'water' in Chinese?",
+        "explanation": "水 (shuǐ) means water, one of the most basic vocabulary words in HSK Level 1.",
+        "reference": "HSK Level 1 Basic Nouns",
+        "points": 1,
+        "answers": [
+            {"text": "茶 (chá)", "is_correct": False},
+            {"text": "水 (shuǐ)", "is_correct": True},
+            {"text": "牛奶 (niúnǎi)", "is_correct": False},
+            {"text": "咖啡 (kāfēi)", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What does 是 (shì) mean?",
+        "explanation": "是 (shì) is the verb 'to be' in Chinese, used for identification and description.",
+        "reference": "HSK Level 1 Essential Verbs",
+        "points": 1,
+        "answers": [
+            {"text": "To have", "is_correct": False},
+            {"text": "To go", "is_correct": False},
+            {"text": "To be", "is_correct": True},
+            {"text": "To do", "is_correct": False},
+        ],
+    },
+    {
+        "text": "How do you say 'one' in Chinese?",
+        "explanation": "一 (yī) is the number one, the first number in the Chinese counting system.",
+        "reference": "HSK Level 1 Numbers",
+        "points": 1,
+        "answers": [
+            {"text": "二 (èr)", "is_correct": False},
+            {"text": "三 (sān)", "is_correct": False},
+            {"text": "一 (yī)", "is_correct": True},
+            {"text": "四 (sì)", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is the meaning of 人 (rén)?",
+        "explanation": "人 (rén) means person or people, a fundamental noun in Chinese.",
+        "reference": "HSK Level 1 People and Relationships",
+        "points": 1,
+        "answers": [
+            {"text": "House", "is_correct": False},
+            {"text": "Person/People", "is_correct": True},
+            {"text": "Animal", "is_correct": False},
+            {"text": "Thing", "is_correct": False},
+        ],
+    },
+    {
+        "text": "How do you say 'big' in Chinese?",
+        "explanation": "大 (dà) means big or large, a common adjective in HSK Level 1.",
+        "reference": "HSK Level 1 Adjectives",
+        "points": 1,
+        "answers": [
+            {"text": "小 (xiǎo)", "is_correct": False},
+            {"text": "大 (dà)", "is_correct": True},
+            {"text": "高 (gāo)", "is_correct": False},
+            {"text": "好 (hǎo)", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What does 不 (bù) mean?",
+        "explanation": "不 (bù) is the negative particle 'not', used to negate verbs and adjectives.",
+        "reference": "HSK Level 1 Grammar Particles",
+        "points": 2,
+        "answers": [
+            {"text": "Very", "is_correct": False},
+            {"text": "Not", "is_correct": True},
+            {"text": "Also", "is_correct": False},
+            {"text": "Only", "is_correct": False},
+        ],
+    },
+    {
+        "text": "How do you say 'eat' in Chinese?",
+        "explanation": "吃 (chī) means to eat, an essential verb for daily communication.",
+        "reference": "HSK Level 1 Daily Actions",
+        "points": 1,
+        "answers": [
+            {"text": "喝 (hē)", "is_correct": False},
+            {"text": "吃 (chī)", "is_correct": True},
+            {"text": "看 (kàn)", "is_correct": False},
+            {"text": "听 (tīng)", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is the meaning of 中国 (Zhōngguó)?",
+        "explanation": "中国 (Zhōngguó) means China, literally 'Middle Kingdom'.",
+        "reference": "HSK Level 1 Countries and Places",
+        "points": 1,
+        "answers": [
+            {"text": "Japan", "is_correct": False},
+            {"text": "Korea", "is_correct": False},
+            {"text": "China", "is_correct": True},
+            {"text": "America", "is_correct": False},
+        ],
+    },
+    {
+        "text": "How do you say 'student' in Chinese?",
+        "explanation": "学生 (xuésheng) means student, combining 学 (study) and 生 (person).",
+        "reference": "HSK Level 1 Occupations and Roles",
+        "points": 1,
+        "answers": [
+            {"text": "老师 (lǎoshī)", "is_correct": False},
+            {"text": "学生 (xuésheng)", "is_correct": True},
+            {"text": "医生 (yīsheng)", "is_correct": False},
+            {"text": "朋友 (péngyou)", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What does 今天 (jīntiān) mean?",
+        "explanation": "今天 (jīntiān) means today, combining 今 (now) and 天 (day).",
+        "reference": "HSK Level 1 Time Expressions",
+        "points": 1,
+        "answers": [
+            {"text": "Yesterday", "is_correct": False},
+            {"text": "Tomorrow", "is_correct": False},
+            {"text": "Today", "is_correct": True},
+            {"text": "Next week", "is_correct": False},
+        ],
+    },
+    {
+        "text": "How do you say 'book' in Chinese?",
+        "explanation": "书 (shū) means book, a fundamental noun for academic contexts.",
+        "reference": "HSK Level 1 School and Learning",
+        "points": 1,
+        "answers": [
+            {"text": "笔 (bǐ)", "is_correct": False},
+            {"text": "纸 (zhǐ)", "is_correct": False},
+            {"text": "书 (shū)", "is_correct": True},
+            {"text": "本 (běn)", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is the meaning of 家 (jiā)?",
+        "explanation": "家 (jiā) means home or family, representing both the physical place and family concept.",
+        "reference": "HSK Level 1 Home and Family",
+        "points": 1,
+        "answers": [
+            {"text": "School", "is_correct": False},
+            {"text": "Office", "is_correct": False},
+            {"text": "Home/Family", "is_correct": True},
+            {"text": "Hospital", "is_correct": False},
+        ],
+    }
+]
