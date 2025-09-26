@@ -52,6 +52,35 @@ class Category(BaseModel):
         from_attributes = True
 
 
+class SimpleCategory(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+    slug: str
+    icon: Optional[str]
+    color: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class CategoryGroup(BaseModel):
+    """A top-level category with its subcategories"""
+    parent: SimpleCategory
+    children: List[SimpleCategory]
+
+    class Config:
+        from_attributes = True
+
+
+class GroupedCategories(BaseModel):
+    """Categories grouped by top-level parent categories"""
+    groups: List[CategoryGroup]
+
+    class Config:
+        from_attributes = True
+
+
 class PaginatedCertifications(BaseModel):
     certifications: List[SimpleCertification]
     total: int

@@ -12,6 +12,10 @@ class CategoryController:
         """Get all categories with their active certifications"""
         return await self.category_service.get_all_categories(db)
 
+    async def get_categories_grouped(self, db=Depends(get_db)):
+        """Get all categories grouped by slug without certifications"""
+        return await self.category_service.get_categories_grouped(db)
+
     async def get_category_certifications(
         self,
         category_slug: str,

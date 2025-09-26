@@ -4,17 +4,17 @@ from fastapi import APIRouter, Depends, Query
 
 from database import get_db
 from .controller import CategoryController
-from .model import Category, PaginatedCertifications
+from .model import Category, PaginatedCertifications, GroupedCategories
 
 
 router = APIRouter()
 category_controller = CategoryController()
 
 
-@router.get("", response_model=List[Category])
+@router.get("", response_model=GroupedCategories)
 async def get_categories(db=Depends(get_db)):
-    """Get all categories with their active certifications"""
-    return await category_controller.get_categories(db)
+    """Get all categories grouped by slug without certifications"""
+    return await category_controller.get_categories_grouped(db)
 
 
 @router.get("/{category_slug}/certifications",

@@ -6,7 +6,6 @@ import sys
 from datetime import datetime
 from uuid import uuid4
 
-from seed_data.categories import CATEGORIES
 from seed_data.teachers import TEST_TEACHERS
 
 from database import AsyncSessionLocal, engine
@@ -19,7 +18,187 @@ from models import (
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-# Import seed data
+def auto_discover_categories_and_certifications():
+    """
+    Auto-discover categories and certifications from folder structure.
+    Each folder with certifications.py becomes a category.
+    """
+    certifications_root = os.path.join(
+        os.path.dirname(__file__), "seed_data", "certifications"
+    )
+    
+    discovered_data = {
+        "categories": {},
+        "certifications": [],
+        "questions": {}
+    }
+    
+    def discover_recursive(path, parent_slug=None, level=0):
+        """Recursively discover categories and certifications"""
+        if not os.path.isdir(path):
+            return
+            
+        folder_name = os.path.basename(path)
+        if folder_name.startswith("__"):
+            return
+            
+        # Check if this folder has a certifications.py file
+        cert_file = os.path.join(path, "certifications.py")
+        has_certifications = os.path.exists(cert_file)
+        
+        if has_certifications:
+            # This is a category with certifications
+            slug = folder_name.replace("_", "-")
+            
+            # Create category metadata
+            category_data = {
+                "name": folder_name.replace("_", " ").title(),
+                "slug": slug,
+                "description": f"{folder_name.replace('_', ' ').title()} certifications",
+                "icon": get_default_icon(folder_name),
+                "color": get_default_color(folder_name),
+                "parent_slug": parent_slug,
+                "level": level
+            }
+            
+            discovered_data["categories"][slug] = category_data
+            
+            # Load certifications from this folder
+            try:
+                relative_path = os.path.relpath(path, certifications_root)
+                module_path = f"seed_data.certifications.{relative_path.replace(os.sep, '.')}.certifications"
+                cert_module = importlib.import_module(module_path)
+                
+                if hasattr(cert_module, "CERTIFICATIONS"):
+                    # Update category slugs in certifications to match discovered category
+                    for cert in cert_module.CERTIFICATIONS:
+                        cert_copy = cert.copy()
+                        cert_copy["category_slug"] = slug
+                        
+                        # Ensure all required fields have defaults
+                        cert_copy.setdefault("is_active", True)
+                        cert_copy.setdefault("level", "Beginner")
+                        cert_copy.setdefault("duration", 60)
+                        cert_copy.setdefault("questions_count", 10)
+                        
+                        discovered_data["certifications"].append(cert_copy)
+                    
+                    print(f"  📋 {folder_name}: {len(cert_module.CERTIFICATIONS)} certifications")
+                    
+                    # Load questions if available
+                    if hasattr(cert_module, "ALL_QUESTIONS"):
+                        discovered_data["questions"].update(cert_module.ALL_QUESTIONS)
+                    
+                    # Try to load individual certification files for questions
+                    for cert in cert_module.CERTIFICATIONS:
+                        cert_slug = cert["slug"]
+                        # Try to find individual certification file with questions
+                        cert_files = glob.glob(os.path.join(path, "*.py"))
+                        for cert_file_path in cert_files:
+                            if os.path.basename(cert_file_path) == "certifications.py":
+                                continue
+                            if os.path.basename(cert_file_path).startswith("__"):
+                                continue
+                                
+                            try:
+                                cert_module_name = os.path.splitext(os.path.basename(cert_file_path))[0]
+                                cert_module_path = f"seed_data.certifications.{relative_path.replace(os.sep, '.')}.{cert_module_name}"
+                                individual_cert_module = importlib.import_module(cert_module_path)
+                                
+                                if hasattr(individual_cert_module, "CERTIFICATION") and hasattr(individual_cert_module, "QUESTIONS"):
+                                    if individual_cert_module.CERTIFICATION.get("slug") == cert_slug:
+                                        discovered_data["questions"][cert_slug] = individual_cert_module.QUESTIONS
+                                        break
+                            except ImportError:
+                                continue
+                                
+            except ImportError as e:
+                print(f"    ❌ Failed to load {folder_name}: {e}")
+        
+        # Recursively check subdirectories
+        try:
+            for item in os.listdir(path):
+                item_path = os.path.join(path, item)
+                if os.path.isdir(item_path) and not item.startswith("__"):
+                    current_slug = folder_name.replace("_", "-") if has_certifications else parent_slug
+                    discover_recursive(item_path, current_slug, level + 1)
+        except PermissionError:
+            pass
+    
+    print("📂 Auto-discovering categories and certifications from folder structure...")
+    discover_recursive(certifications_root)
+    
+    return discovered_data
+
+
+def get_default_icon(folder_name):
+    """Get default icon based on folder name"""
+    icon_map = {
+        "aws": "aws",
+        "azure": "azure", 
+        "google_cloud": "gcp",
+        "programming": "code",
+        "cybersecurity": "shield",
+        "data_analytics": "chart",
+        "project_management": "project",
+        "networking": "network",
+        "database": "database",
+        "linux": "linux",
+        "system_design": "architecture",
+        "data_structures_algorithms": "algorithm",
+        "devops": "devops",
+        "mathematics": "calculator",
+        "physics": "atom",
+        "chemistry": "test-tube",
+        "biology": "dna",
+        "english": "book-open",
+        "german": "flag-de",
+        "french": "flag-fr",
+        "spanish": "flag-es",
+        "italian": "flag-it",
+        "japanese": "flag-jp",
+        "chinese": "flag-cn",
+        "korean": "flag-kr",
+        "russian": "flag-ru",
+        "portuguese": "flag-pt",
+        "arabic": "flag-sa"
+    }
+    return icon_map.get(folder_name, "book")
+
+
+def get_default_color(folder_name):
+    """Get default color based on folder name"""
+    color_map = {
+        "aws": "orange",
+        "azure": "blue",
+        "google_cloud": "green", 
+        "programming": "teal",
+        "cybersecurity": "red",
+        "data_analytics": "indigo",
+        "project_management": "yellow",
+        "networking": "cyan",
+        "database": "pink",
+        "linux": "gray",
+        "system_design": "emerald",
+        "data_structures_algorithms": "violet",
+        "devops": "purple",
+        "mathematics": "purple",
+        "physics": "blue",
+        "chemistry": "orange", 
+        "biology": "emerald",
+        "english": "blue",
+        "german": "red",
+        "french": "blue",
+        "spanish": "yellow",
+        "italian": "green",
+        "japanese": "red",
+        "chinese": "red",
+        "korean": "blue",
+        "russian": "blue",
+        "portuguese": "green",
+        "arabic": "green"
+    }
+    return color_map.get(folder_name, "gray")
 
 
 async def create_test_teachers(session, certification_map):
@@ -109,163 +288,31 @@ async def create_test_teachers(session, certification_map):
           f"{qualification_count} qualifications")
 
 
-def load_all_certifications():
-    """Dynamically load all certifications from the organized folder structure"""
-    certifications_root = os.path.join(
-        os.path.dirname(__file__), "seed_data", "certifications"
-    )
-    all_certifications = []
-    all_questions = {}
-
-    # Get all category folders
-    category_folders = [
-        f
-        for f in os.listdir(certifications_root)
-        if os.path.isdir(os.path.join(certifications_root, f))
-        and not f.startswith("__")
-    ]
-
-    for category_folder in category_folders:
-        # Handle nested structure (languages, academic)
-        if category_folder in ["languages", "academic"]:
-            print(f"  📁 Processing {category_folder} subfolder...")
-            category_path = os.path.join(certifications_root, category_folder)
-            subcategory_folders = [
-                f for f in os.listdir(category_path)
-                if os.path.isdir(os.path.join(category_path, f))
-                and not f.startswith("__")
-            ]
-            
-            for subcategory_folder in subcategory_folders:
-                try:
-                    # Try to load certifications from subcategory
-                    cert_file = os.path.join(
-                        category_path, subcategory_folder, "certifications.py"
-                    )
-                    if os.path.exists(cert_file):
-                        module_path = (f"seed_data.certifications.{category_folder}."
-                                     f"{subcategory_folder}.certifications")
-                        cert_module = importlib.import_module(module_path)
-                        
-                        if hasattr(cert_module, "CERTIFICATIONS"):
-                            all_certifications.extend(cert_module.CERTIFICATIONS)
-                            print(
-                                f"    📋 {subcategory_folder}: "
-                                f"{len(cert_module.CERTIFICATIONS)} certifications loaded"
-                            )
-                            
-                except ImportError as e:
-                    print(f"    ❌ Failed to load {subcategory_folder}: {e}")
-            continue
-            
-        # Handle existing IT category structure
-        try:
-            # Try to import the category module (organized structure)
-            module_path = f"seed_data.certifications.{category_folder}"
-            category_module = importlib.import_module(module_path)
-
-            if hasattr(category_module, "CERTIFICATIONS"):
-                all_certifications.extend(category_module.CERTIFICATIONS)
-                print(
-                    f"  📋 {category_folder}: {len(category_module.CERTIFICATIONS)} certifications loaded"
-                )
-
-                if hasattr(category_module, "ALL_QUESTIONS"):
-                    all_questions.update(category_module.ALL_QUESTIONS)
-
-        except ImportError as e:
-            print(
-                f"  ⚠️  {category_folder}: No organized module found, trying individual files"
-            )
-
-            # Fallback: try to load individual certification files
-            category_path = os.path.join(certifications_root, category_folder)
-            cert_files = glob.glob(os.path.join(category_path, "*.py"))
-
-            category_certs = []
-            category_questions = {}
-
-            for cert_file in cert_files:
-                if os.path.basename(cert_file).startswith("__"):
-                    continue
-
-                try:
-                    cert_module_name = os.path.splitext(
-                        os.path.basename(cert_file))[0]
-                    cert_module_path = (
-                        f"seed_data.certifications.{category_folder}.{cert_module_name}"
-                    )
-                    cert_module = importlib.import_module(cert_module_path)
-
-                    if hasattr(cert_module, "CERTIFICATION"):
-                        category_certs.append(cert_module.CERTIFICATION)
-
-                        if hasattr(cert_module,
-                                   "QUESTIONS") and cert_module.QUESTIONS:
-                            category_questions[cert_module.CERTIFICATION["slug"]] = (
-                                cert_module.QUESTIONS)
-
-                except ImportError as cert_e:
-                    print(f"    ❌ Failed to load {cert_module_name}: {cert_e}")
-
-            if category_certs:
-                all_certifications.extend(category_certs)
-                all_questions.update(category_questions)
-                print(
-                    f"  📋 {category_folder}: {len(category_certs)} certifications loaded (individual files)"
-                )
-
-    # Load legacy flat files only for categories that don't have organized
-    # structure
-    try:
-        # Only load legacy modules that don't have organized counterparts
-        legacy_modules = []
-        for module_name in [
-            "azure",
-            "google_cloud",
-            "devops",
-            "programming",
-            "data_analytics",
-            "project_management",
-            "networking",
-            "database",
-        ]:
-            if module_name not in category_folders:
-                try:
-                    module = importlib.import_module(
-                        f"seed_data.certifications.{module_name}"
-                    )
-                    legacy_modules.append((module_name, module))
-                except ImportError:
-                    continue
-
-        for module_name, module in legacy_modules:
-            if hasattr(module, "CERTIFICATIONS"):
-                all_certifications.extend(module.CERTIFICATIONS)
-                print(
-                    f"  📋 {module_name} (legacy): {len(module.CERTIFICATIONS)} certifications"
-                )
-
-                if hasattr(module, "QUESTIONS"):
-                    all_questions.update(module.QUESTIONS)
-
-    except ImportError as e:
-        print(f"  ℹ️  No legacy certification modules found: {e}")
-
-    return all_certifications, all_questions
-
-
 async def seed_database():
-    """Seed the database with comprehensive certification data"""
-    print("🌱 Starting comprehensive database seeding with organized structure...")
+    """Seed the database with auto-discovered certification data"""
+    print("🌱 Starting database seeding with auto-discovery...")
 
-    # Load all certifications dynamically
-    print("📂 Loading certifications from organized folder structure...")
-    all_certifications, all_questions = load_all_certifications()
+    # Auto-discover all certifications and categories
+    discovered_data = auto_discover_categories_and_certifications()
+    
+    categories_data = list(discovered_data["categories"].values())
+    all_certifications = discovered_data["certifications"]
+    all_questions = discovered_data["questions"]
+    
+    # Deduplicate certifications by slug
+    seen_slugs = set()
+    unique_certifications = []
+    for cert in all_certifications:
+        slug = cert.get("slug")
+        if slug and slug not in seen_slugs:
+            seen_slugs.add(slug)
+            unique_certifications.append(cert)
+        else:
+            print(f"  ⚠️  Skipping duplicate certification slug: {slug}")
+    
+    all_certifications = unique_certifications
 
-    print(
-        f"📊 Found {len(CATEGORIES)} categories and {len(all_certifications)} certifications"
-    )
+    print(f"📊 Found {len(categories_data)} categories and {len(all_certifications)} certifications")
 
     # Create all tables
     async with engine.begin() as conn:
@@ -279,8 +326,11 @@ async def seed_database():
             print("📁 Creating categories...")
             category_map = {}
             
+            # Sort categories by level to ensure parents are created first
+            categories_data.sort(key=lambda x: x["level"])
+            
             # First pass: create all categories without parent relationships
-            for category_data in CATEGORIES:
+            for category_data in categories_data:
                 category = Category(
                     name=category_data["name"],
                     description=category_data["description"],
@@ -294,8 +344,8 @@ async def seed_database():
             await session.flush()  # To get category IDs
             
             # Second pass: set parent relationships
-            for category_data in CATEGORIES:
-                if "parent_slug" in category_data:
+            for category_data in categories_data:
+                if category_data.get("parent_slug"):
                     parent_slug = category_data["parent_slug"]
                     if parent_slug in category_map:
                         child_category = category_map[category_data["slug"]]
@@ -303,7 +353,7 @@ async def seed_database():
                         child_category.parent_id = parent_category.id
             
             await session.flush()  # Update parent relationships
-            print(f"✅ Created {len(CATEGORIES)} categories with hierarchy")
+            print(f"✅ Created {len(categories_data)} categories with hierarchy")
 
             # Create certifications
             print("📜 Creating certifications...")
@@ -315,21 +365,20 @@ async def seed_database():
                     category = category_map[category_slug]
 
                     certification = Certification(
-                        name=cert_data["name"],
-                        description=cert_data["description"],
-                        slug=cert_data["slug"],
-                        level=cert_data["level"],
-                        duration=cert_data["duration"],
-                        questions_count=cert_data["questions_count"],
+                        name=cert_data.get("name", "Unknown Certification"),
+                        description=cert_data.get("description", "No description available"),
+                        slug=cert_data.get("slug", "unknown-cert"),
+                        level=cert_data.get("level", "Beginner"),
+                        duration=cert_data.get("duration", 60),
+                        questions_count=cert_data.get("questions_count", 10),
                         category_id=category.id,
-                        is_active=cert_data["is_active"],
+                        is_active=cert_data.get("is_active", True),
                     )
                     session.add(certification)
                     certification_map[cert_data["slug"]] = certification
                 else:
-                    print(
-                        f"  ⚠️  Skipping certification {cert_data['name']} - category '{category_slug}' not found"
-                    )
+                    cert_name = cert_data.get("name", "Unknown")
+                    print(f"  ⚠️  Skipping certification {cert_name} - category '{category_slug}' not found")
 
             await session.flush()  # To get certification IDs
             print(f"✅ Created {len(certification_map)} certifications")
@@ -344,9 +393,14 @@ async def seed_database():
                     certification = certification_map[cert_slug]
 
                     for question_data in questions_data:
+                        # Ensure question has required fields
+                        if not question_data.get("text"):
+                            print(f"    ⚠️  Skipping question without text for {cert_slug}")
+                            continue
+                            
                         question = Question(
-                            text=question_data["text"],
-                            explanation=question_data["explanation"],
+                            text=question_data.get("text", ""),
+                            explanation=question_data.get("explanation", ""),
                             reference=question_data.get("reference", ""),
                             points=question_data.get("points", 1),
                             certification_id=certification.id,
@@ -355,18 +409,21 @@ async def seed_database():
                         await session.flush()  # To get question ID
                         total_questions += 1
 
-                        for answer_data in question_data["answers"]:
+                        # Process answers if they exist
+                        answers = question_data.get("answers", [])
+                        for answer_data in answers:
+                            if not answer_data.get("text"):
+                                continue
+                                
                             answer = Answer(
-                                text=answer_data["text"],
-                                is_correct=answer_data["is_correct"],
+                                text=answer_data.get("text", ""),
+                                is_correct=answer_data.get("is_correct", False),
                                 question_id=question.id,
                             )
                             session.add(answer)
                             total_answers += 1
 
-            print(
-                f"✅ Created {total_questions} questions with {total_answers} answer options"
-            )
+            print(f"✅ Created {total_questions} questions with {total_answers} answer options")
 
             # Create test teachers with their profiles and qualifications
             await create_test_teachers(session, certification_map)
@@ -378,7 +435,7 @@ async def seed_database():
             print("\n🎉 Database seeding completed successfully!")
             print("=" * 60)
             print("SEEDING SUMMARY:")
-            print(f"📁 Categories: {len(CATEGORIES)}")
+            print(f"📁 Categories: {len(categories_data)}")
             print(f"📜 Certifications: {len(certification_map)}")
             print(f"❓ Questions: {total_questions}")
             print(f"✅ Answer Options: {total_answers}")
@@ -387,14 +444,13 @@ async def seed_database():
 
             # Print breakdown by category
             print("\nCERTIFICATIONS BY CATEGORY:")
-            for category_data in CATEGORIES:
+            for category_data in categories_data:
                 cert_count = sum(
                     1
                     for cert in all_certifications
                     if cert["category_slug"] == category_data["slug"]
                 )
-                print(
-                    f"  {category_data['name']}: {cert_count} certifications")
+                print(f"  {category_data['name']}: {cert_count} certifications")
 
         except Exception as e:
             print(f"❌ Error seeding database: {e}")

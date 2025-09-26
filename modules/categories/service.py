@@ -103,3 +103,111 @@ class CategoryService:
                 status_code=500,
                 detail=f"Failed to fetch certifications: {str(e)}"
             )
+
+    async def get_categories_grouped(self, db):
+        """Get categories grouped by logical domains"""
+        try:
+            # Get all categories
+            stmt = (
+                select(CategoryModel)
+                .order_by(CategoryModel.name)
+            )
+            result = await db.execute(stmt)
+            all_categories = result.scalars().all()
+
+            # Define logical groupings based on category characteristics
+            it_keywords = [
+                'aws', 'azure', 'google-cloud', 'gcp', 'devops', 'programming',
+                'cybersecurity', 'data-analytics', 'data-structures-algorithms',
+                'project-management', 'networking', 'database', 'linux',
+                'system-design', 'computer-science'
+            ]
+
+            language_keywords = [
+                'arabic', 'chinese', 'french', 'german', 'italian', 'japanese',
+                'korean', 'portuguese', 'russian', 'spanish', 'english'
+            ]
+
+            academic_keywords = [
+                'accounting', 'art-design', 'biology', 'business-studies',
+                'chemistry', 'economics', 'environmental-science', 'geography',
+                'history', 'mathematics', 'medical', 'anatomy-physiology',
+                'music', 'philosophy', 'physical-education', 'physics',
+                'political-science', 'psychology', 'science', 'sociology',
+                'statistics'
+            ]
+
+            # Create logical parent categories
+            it_parent = {
+                "id": 9999,
+                "name": "IT & Technology",
+                "description": "Information Technology and Technical Certs",
+                "slug": "it",
+                "icon": "computer",
+                "color": "blue"
+            }
+
+            languages_parent = {
+                "id": 9998,
+                "name": "Languages",
+                "description": "Language proficiency certifications",
+                "slug": "languages",
+                "icon": "language",
+                "color": "rose"
+            }
+
+            academic_parent = {
+                "id": 9997,
+                "name": "Academic",
+                "description": "Academic subjects and grade-level certs",
+                "slug": "academic",
+                "icon": "academic",
+                "color": "amber"
+            }
+
+            # Group categories
+            it_categories = []
+            language_categories = []
+            academic_categories = []
+
+            for category in all_categories:
+                if category.slug in it_keywords:
+                    it_categories.append(category)
+                elif category.slug in language_keywords:
+                    language_categories.append(category)
+                elif category.slug in academic_keywords:
+                    academic_categories.append(category)
+                else:
+                    # Default to academic for uncategorized
+                    academic_categories.append(category)
+
+            groups = []
+            
+            if it_categories:
+                groups.append({
+                    "parent": it_parent,
+                    "children": it_categories
+                })
+                
+            if language_categories:
+                groups.append({
+                    "parent": languages_parent,
+                    "children": language_categories
+                })
+                
+            if academic_categories:
+                groups.append({
+                    "parent": academic_parent,
+                    "children": academic_categories
+                })
+
+            return {
+                "groups": groups
+            }
+
+        except Exception as e:
+            print(f"Categories Grouped Service Error: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to fetch grouped categories: {str(e)}"
+            )
