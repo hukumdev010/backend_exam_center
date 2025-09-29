@@ -10,10 +10,14 @@ class ProgressController:
         self.progress_service = ProgressService()
 
     async def get_user_progress(
-        self, current_user: UserSession = Depends(get_current_user), db=Depends(get_db)
+        self,
+        current_user: UserSession = Depends(get_current_user),
+        db=Depends(get_db),
     ):
         """Get user progress for all certifications"""
-        return await self.progress_service.get_user_progress(db, current_user.user.id)
+        return await self.progress_service.get_user_progress(
+            db, current_user.user.id
+        )
 
     async def update_user_progress(
         self,

@@ -40,6 +40,11 @@ class TeacherQualification(BaseModel):
 
 class TeacherProfileCreate(BaseModel):
     bio: Optional[str] = None
+    qualifications: Optional[str] = None
+    experience: Optional[str] = None
+    github_url: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    website_url: Optional[str] = None
     experience_years: Optional[int] = None
     hourly_rate_one_on_one: Optional[float] = None
     hourly_rate_group: Optional[float] = None
@@ -50,6 +55,11 @@ class TeacherProfileCreate(BaseModel):
 
 class TeacherProfileUpdate(BaseModel):
     bio: Optional[str] = None
+    qualifications: Optional[str] = None
+    experience: Optional[str] = None
+    github_url: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    website_url: Optional[str] = None
     experience_years: Optional[int] = None
     hourly_rate_one_on_one: Optional[float] = None
     hourly_rate_group: Optional[float] = None
@@ -63,6 +73,11 @@ class TeacherProfile(BaseModel):
     id: int
     user_id: str
     bio: Optional[str]
+    qualifications: Optional[str]
+    experience: Optional[str]
+    github_url: Optional[str]
+    linkedin_url: Optional[str]
+    website_url: Optional[str]
     experience_years: Optional[int]
     hourly_rate_one_on_one: Optional[float]
     hourly_rate_group: Optional[float]
@@ -74,6 +89,7 @@ class TeacherProfile(BaseModel):
     approved_by: Optional[str]
     approved_at: Optional[datetime]
     rejection_reason: Optional[str]
+    admin_notes: Optional[str]
     created_at: datetime
     updated_at: datetime
 
@@ -84,6 +100,7 @@ class TeacherProfile(BaseModel):
 class AdminApprovalRequest(BaseModel):
     status: TeacherStatusEnum
     rejection_reason: Optional[str] = None
+    admin_notes: Optional[str] = None
 
 
 class TeacherWithQualifications(TeacherProfile):

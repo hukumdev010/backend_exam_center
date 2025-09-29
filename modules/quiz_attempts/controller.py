@@ -1,5 +1,4 @@
 from fastapi import Depends
-from typing import List
 
 from auth import UserSession, get_current_user
 from database import get_db

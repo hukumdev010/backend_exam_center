@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, Query
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
-from auth import get_current_user, admin_required
+from auth import get_current_user, admin_required, UserSession
+from modules.rbac.decorators import require_policies, require_admin
 from .controller import TeacherController
 from .model import (
     TeacherProfile,
@@ -14,13 +15,11 @@ from .model import (
     TeacherStatusEnum
 )
 
-# Add import for UserSession
-from auth import UserSession
-
-router = APIRouter(prefix="/teachers", tags=["teachers"])
+router = APIRouter(tags=["teachers"])
 
 
-@router.post("/apply", response_model=TeacherProfile)
+@router.post("/apply", response_model=TeacherProfile,
+             dependencies=[Depends(require_policies("createTeacher"))])
 async def apply_as_teacher(
     profile_data: TeacherProfileCreate,
     current_user: UserSession = Depends(get_current_user),
@@ -110,7 +109,8 @@ async def process_quiz_for_qualification(
         }
 
 
-@router.get("/", response_model=List[TeacherProfile])
+@router.get("/", response_model=List[TeacherProfile],
+            dependencies=[Depends(require_policies("readTeacher"))])
 async def list_teachers(
     status: Optional[TeacherStatusEnum] = Query(None),
     is_available: Optional[bool] = Query(None),
@@ -127,7 +127,8 @@ async def list_teachers(
     )
 
 
-@router.get("/{teacher_id}", response_model=TeacherWithQualifications)
+@router.get("/{teacher_id}", response_model=TeacherWithQualifications,
+            dependencies=[Depends(require_policies("readTeacher"))])
 async def get_teacher_profile(
     teacher_id: int,
     db: AsyncSession = Depends(get_db)
@@ -139,7 +140,8 @@ async def get_teacher_profile(
 
 
 # Admin endpoints
-@router.post("/admin/{teacher_id}/approve", response_model=TeacherProfile)
+@router.post("/admin/{teacher_id}/approve", response_model=TeacherProfile,
+             dependencies=[Depends(require_policies("approveTeacher"))])
 async def admin_approve_teacher(
     teacher_id: int,
     approval_data: AdminApprovalRequest,

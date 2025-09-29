@@ -14,6 +14,8 @@ from modules.quiz_attempts.route import router as quiz_attempts_router
 from modules.ai_assistant.route import router as ai_assistant_router
 from modules.teachers.route import router as teachers_router
 from modules.sessions.route import router as sessions_router
+from modules.users.route import router as users_router
+from modules.rbac.route import router as rbac_router
 from settings.loader import get_settings
 
 
@@ -75,9 +77,25 @@ def include_routers(app: FastAPI) -> None:
         prefix="/api/sessions",
         tags=["sessions"]
     )
+    
+    # Users routes
+    app.include_router(
+        users_router,
+        prefix="/api/users",
+        tags=["users"]
+    )
+    
+    # RBAC management routes (admin only)
+    app.include_router(
+        rbac_router,
+        prefix="/api/admin",
+        tags=["rbac-management"]
+    )
 
     # Health and system endpoints
     register_system_routes(app)
+
+
 def register_system_routes(app: FastAPI) -> None:
     """
     Register system-level routes like health checks and configuration.
@@ -128,5 +146,7 @@ __all__ = [
     "quiz_attempts_router",
     "ai_assistant_router",
     "teachers_router",
-    "sessions_router"
+    "sessions_router",
+    "users_router",
+    "rbac_router"
 ]

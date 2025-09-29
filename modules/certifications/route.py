@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 
 from modules.auth import get_optional_user
 from database import get_db
+from modules.rbac.decorators import require_read_certification, require_create_quiz_attempt
 from models import Certification as CertificationModel
 from models import Question as QuestionModel
 from models import UserProgress as UserProgressModel
@@ -17,7 +18,7 @@ router = APIRouter()
 certification_controller = CertificationController()
 
 
-@router.get("/search")
+@router.get("/search", dependencies=[Depends(require_read_certification())])
 async def search_certifications(
     q: Optional[str] = Query(None, description="Search query"),
     db=Depends(get_db)
@@ -26,13 +27,13 @@ async def search_certifications(
     return await certification_controller.search_certifications(q, db)
 
 
-@router.get("/{slug}")
+@router.get("/{slug}", dependencies=[Depends(require_read_certification())])
 async def get_certification(slug: str, db=Depends(get_db)):
     """Get certification by slug with questions and answers"""
     return await certification_controller.get_certification(slug, db)
 
 
-@router.post("/{slug}/verify-answer")
+@router.post("/{slug}/verify-answer", dependencies=[Depends(require_create_quiz_attempt())])
 async def verify_answer(
     slug: str,
     answer_submission: AnswerSubmission,

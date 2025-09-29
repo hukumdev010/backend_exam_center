@@ -1,6 +1,4 @@
 import google.generativeai as genai
-from fastapi import HTTPException
-
 from settings.loader import get_settings
 
 
@@ -8,7 +6,9 @@ class AIAssistantService:
     def __init__(self):
         pass
 
-    async def chat_with_ai(self, message: str, context: str = None, current_question: str = None, conversation_history: list = None):
+    async def chat_with_ai(self, message: str, context: str = None, 
+                           current_question: str = None,
+                           conversation_history: list = None):
         """Chat with AI assistant for exam help"""
         try:
             # Get settings with API key
@@ -31,11 +31,15 @@ class AIAssistantService:
             model = genai.GenerativeModel("gemini-pro")
 
             # Build conversation context
-            system_prompt = """You are an AI tutor specializing in certification exams. 
-            You help students understand concepts, explain answers, and provide study guidance.
-            Keep responses helpful, educational, and encouraging. If you're unsure about something,
-            say so rather than guessing."""
-
+            system_prompt = (
+                "You are an AI tutor specializing in certification exams. "
+                "You help students understand concepts, explain answers, "
+                "and provide study guidance. "
+                "Keep responses helpful, educational, and encouraging. "
+                "If you're unsure about something, say so "
+                "rather than guessing."
+            )
+    
             # Add context if provided
             if context:
                 system_prompt += f"\n\nContext: {context}"
@@ -49,7 +53,10 @@ class AIAssistantService:
             if conversation_history:
                 for msg in conversation_history[-5:]:  # Keep last 5 messages
                     role = "User" if msg.get("is_user") else "Assistant"
-                    conversation = f"{role}: {msg.get('content')}\n" + conversation
+                    conversation = (
+                        f"{role}: {msg.get('content')}\n" +
+                        conversation
+                    )
 
             # Generate response
             response = model.generate_content(conversation)
@@ -57,7 +64,9 @@ class AIAssistantService:
 
         except Exception as e:
             return {
-                "response": "I'm sorry, I encountered an error. Please try again.",
+                "response": (
+                    "I'm sorry, I encountered an error. Please try again."
+                ),
                 "error": str(e)
             }
 
@@ -82,7 +91,11 @@ class AIAssistantService:
             return {
                 "status": "healthy",
                 "model": "gemini-pro",
-                "test_response": response.text[:100] + "..." if len(response.text) > 100 else response.text
+                "test_response": (
+                    response.text[:100] + "..."
+                    if len(response.text) > 100
+                    else response.text
+                )
             }
         except Exception as e:
             return {
@@ -121,7 +134,11 @@ class AIAssistantService:
             }
 
     async def generate_study_prompt(
-        self, certification_name: str, category: str = None, level: str = None, user_progress: int = None
+        self,
+        certification_name: str,
+        category: str = None,
+        level: str = None,
+        user_progress: int = None,
     ):
         """Generate a personalized study prompt"""
         try:
@@ -138,9 +155,10 @@ class AIAssistantService:
             model = genai.GenerativeModel("gemini-pro")
 
             # Build the prompt
-            prompt_request = f"""
-            Generate a personalized study prompt for the {certification_name} certification.
-            """
+            prompt_request = (
+                f"Generate a personalized study prompt for the "
+                f"{certification_name} certification.\n"
+            )
 
             if category:
                 prompt_request += f" This is in the {category} category."
@@ -149,7 +167,9 @@ class AIAssistantService:
                 prompt_request += f" The difficulty level is {level}."
             
             if user_progress:
-                prompt_request += f" The user is {user_progress}% through their preparation."
+                prompt_request += (
+                    f" The user is {user_progress}% through their preparation."
+                )
 
             prompt_request += """
             

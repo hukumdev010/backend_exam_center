@@ -121,6 +121,11 @@ class TeacherService:
         teacher_profile = TeacherProfile(
             user_id=user_id,
             bio=profile_data.bio,
+            qualifications=profile_data.qualifications,
+            experience=profile_data.experience,
+            github_url=profile_data.github_url,
+            linkedin_url=profile_data.linkedin_url,
+            website_url=profile_data.website_url,
             experience_years=profile_data.experience_years,
             hourly_rate_one_on_one=profile_data.hourly_rate_one_on_one,
             hourly_rate_group=profile_data.hourly_rate_group,
@@ -191,6 +196,10 @@ class TeacherService:
             teacher_profile.rejection_reason = approval_data.rejection_reason
             teacher_profile.approved_by = admin_user_id
             teacher_profile.approved_at = None
+            
+        # Set admin notes if provided
+        if approval_data.admin_notes:
+            teacher_profile.admin_notes = approval_data.admin_notes
             
         teacher_profile.updated_at = datetime.utcnow()
         

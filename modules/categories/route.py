@@ -3,6 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, Query
 
 from database import get_db
+from modules.rbac.decorators import require_read_category
 from .controller import CategoryController
 from .model import Category, PaginatedCertifications, GroupedCategories
 
@@ -11,14 +12,23 @@ router = APIRouter()
 category_controller = CategoryController()
 
 
-@router.get("", response_model=GroupedCategories)
+@router.get("", response_model=GroupedCategories,
+            dependencies=[Depends(require_read_category())])
 async def get_categories(db=Depends(get_db)):
     """Get all categories grouped by slug without certifications"""
     return await category_controller.get_categories_grouped(db)
 
 
+@router.get("/with-certifications", response_model=List[Category],
+            dependencies=[Depends(require_read_category())])
+async def get_categories_with_certifications(db=Depends(get_db)):
+    """Get all categories with their active certifications (legacy format)"""
+    return await category_controller.get_categories(db)
+
+
 @router.get("/{category_slug}/certifications",
-            response_model=PaginatedCertifications)
+            response_model=PaginatedCertifications,
+            dependencies=[Depends(require_read_category())])
 async def get_category_certifications(
     category_slug: str,
     page: int = Query(1, ge=1, description="Page number"),

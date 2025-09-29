@@ -3,6 +3,7 @@ from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from auth import get_current_user
+from modules.rbac.decorators import require_policies
 from .controller import SessionController
 from .model import (
     TeachingSession,
@@ -18,7 +19,8 @@ from datetime import datetime
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
 
-@router.post("/", response_model=TeachingSession)
+@router.post("/", response_model=TeachingSession,
+             dependencies=[Depends(require_policies("createSession"))])
 async def create_teaching_session(
     session_data: TeachingSessionCreate,
     current_user: dict = Depends(get_current_user),
@@ -32,7 +34,8 @@ async def create_teaching_session(
     )
 
 
-@router.put("/{session_id}", response_model=TeachingSession)
+@router.put("/{session_id}", response_model=TeachingSession,
+            dependencies=[Depends(require_policies("updateSession"))])
 async def update_teaching_session(
     session_id: int,
     update_data: TeachingSessionUpdate,
@@ -47,7 +50,8 @@ async def update_teaching_session(
     )
 
 
-@router.get("/available", response_model=List[TeachingSession])
+@router.get("/available", response_model=List[TeachingSession],
+            dependencies=[Depends(require_policies("readSession"))])
 async def get_available_sessions(
     category_id: Optional[int] = Query(None),
     certification_id: Optional[int] = Query(None),
@@ -109,7 +113,8 @@ async def get_my_bookings_as_student(
 
 
 # Booking endpoints
-@router.post("/{session_id}/book", response_model=SessionBooking)
+@router.post("/{session_id}/book", response_model=SessionBooking,
+             dependencies=[Depends(require_policies("bookSession"))])
 async def book_session(
     session_id: int,
     booking_data: SessionBookingCreate,

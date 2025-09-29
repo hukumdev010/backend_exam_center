@@ -9,6 +9,7 @@ from sqlalchemy import (
     UniqueConstraint,
     Float,
     Enum,
+    Table,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -16,6 +17,125 @@ from sqlalchemy.sql import func
 import enum
 
 Base = declarative_base()
+
+
+# RBAC Association Tables
+user_roles = Table(
+    'user_roles',
+    Base.metadata,
+    Column('user_id', String, ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
+    Column('role_id', Integer, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True),
+    Column('assigned_at', DateTime, default=func.now()),
+    Column('assigned_by', String, ForeignKey('users.id', name='fk_user_roles_assigned_by'), nullable=True)
+)
+
+role_policies = Table(
+    'role_policies',
+    Base.metadata,
+    Column('role_id', Integer, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True),
+    Column('policy_id', Integer, ForeignKey('policies.id', ondelete='CASCADE'), primary_key=True),
+    Column('created_at', DateTime, default=func.now())
+)
+
+role_permissions = Table(
+    'role_permissions',
+    Base.metadata,
+    Column('role_id', Integer, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True),
+    Column('permission_id', Integer, ForeignKey('permissions.id', ondelete='CASCADE'), primary_key=True),
+    Column('created_at', DateTime, default=func.now())
+)
+
+permission_policies = Table(
+    'permission_policies',
+    Base.metadata,
+    Column('permission_id', Integer, ForeignKey('permissions.id', ondelete='CASCADE'), primary_key=True),
+    Column('policy_id', Integer, ForeignKey('policies.id', ondelete='CASCADE'), primary_key=True),
+    Column('created_at', DateTime, default=func.now())
+)
+
+
+# RBAC Models
+
+class Policy(Base):
+    __tablename__ = "policies"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    # e.g., "readCategory", "updateCategory"
+    name = Column(String, unique=True, nullable=False)
+    description = Column(String, nullable=True)
+    # e.g., "category", "certification", "user"
+    resource = Column(String, nullable=False)
+    # e.g., "read", "create", "update", "delete"
+    action = Column(String, nullable=False)
+    # System policies cannot be deleted
+    is_system = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    roles = relationship(
+        "Role", secondary=role_policies, back_populates="policies"
+    )
+    permissions = relationship(
+        "Permission",
+        secondary=permission_policies,
+        back_populates="policies"
+    )
+
+
+class Permission(Base):
+    __tablename__ = "permissions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    # e.g., "CategoryManager", "StudentAccess"
+    name = Column(String, unique=True, nullable=False)
+    description = Column(String, nullable=True)
+    # System permissions cannot be deleted
+    is_system = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    roles = relationship(
+        "Role", secondary=role_permissions, back_populates="permissions"
+    )
+    policies = relationship(
+        "Policy", secondary=permission_policies, back_populates="permissions"
+    )
+
+
+class Role(Base):
+    __tablename__ = "roles"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    # e.g., "student", "teacher", "admin", "superadmin"
+    name = Column(String, unique=True, nullable=False)
+    description = Column(String, nullable=True)
+    # System roles cannot be deleted
+    is_system = Column(Boolean, default=False)
+    # Default role assigned to new users
+    is_default = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    users = relationship(
+        "User", 
+        secondary=user_roles, 
+        back_populates="roles",
+        primaryjoin="Role.id == user_roles.c.role_id",
+        secondaryjoin="User.id == user_roles.c.user_id"
+    )
+    policies = relationship(
+        "Policy", 
+        secondary=role_policies, 
+        back_populates="roles"
+    )
+    permissions = relationship(
+        "Permission", 
+        secondary=role_permissions, 
+        back_populates="roles"
+    )
 
 
 class Category(Base):
@@ -175,21 +295,30 @@ class User(Base):
     quiz_attempts = relationship(
         "QuizAttempt", back_populates="user", cascade="all, delete-orphan"
     )
+    # RBAC relationships
+    roles = relationship(
+        "Role", 
+        secondary=user_roles, 
+        back_populates="users",
+        primaryjoin="User.id == user_roles.c.user_id",
+        secondaryjoin="Role.id == user_roles.c.role_id"
+    )
+
     # Teacher-Student system relationships
     teacher_qualifications = relationship(
-        "TeacherQualification", 
-        back_populates="user", 
+        "TeacherQualification",
+        back_populates="user",
         cascade="all, delete-orphan"
     )
     teacher_profile = relationship(
-        "TeacherProfile", 
-        back_populates="user", 
+        "TeacherProfile",
+        back_populates="user",
         cascade="all, delete-orphan",
         foreign_keys="TeacherProfile.user_id"
     )
     session_bookings = relationship(
-        "SessionBooking", 
-        back_populates="student", 
+        "SessionBooking",
+        back_populates="student",
         cascade="all, delete-orphan"
     )
 
@@ -353,6 +482,11 @@ class TeacherProfile(Base):
         unique=True
     )
     bio = Column(Text, nullable=True)
+    qualifications = Column(Text, nullable=True)  # Educational qualifications
+    experience = Column(Text, nullable=True)  # Professional experience
+    github_url = Column(String, nullable=True)
+    linkedin_url = Column(String, nullable=True)
+    website_url = Column(String, nullable=True)
     experience_years = Column(Integer, nullable=True)
     hourly_rate_one_on_one = Column(Float, nullable=True)  # USD per hour 1:1
     hourly_rate_group = Column(Float, nullable=True)  # USD/hour/student group
@@ -361,6 +495,7 @@ class TeacherProfile(Base):
     is_available = Column(Boolean, default=True)
     languages_spoken = Column(String, nullable=True)  # JSON array as string
     timezone = Column(String, nullable=True)
+    admin_notes = Column(Text, nullable=True)  # Admin approval notes
     approved_by = Column(String, ForeignKey("users.id"), nullable=True)
     approved_at = Column(DateTime, nullable=True)
     rejection_reason = Column(Text, nullable=True)
@@ -369,12 +504,12 @@ class TeacherProfile(Base):
 
     # Relationships
     user = relationship(
-        "User", 
-        back_populates="teacher_profile", 
+        "User",
+        back_populates="teacher_profile",
         foreign_keys=[user_id]
     )
     approved_by_user = relationship(
-        "User", 
+        "User",
         foreign_keys=[approved_by]
     )
     sessions = relationship("TeachingSession", back_populates="teacher")

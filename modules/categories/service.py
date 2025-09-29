@@ -118,7 +118,8 @@ class CategoryService:
             # Define logical groupings based on category characteristics
             it_keywords = [
                 'aws', 'azure', 'google-cloud', 'gcp', 'devops', 'programming',
-                'cybersecurity', 'data-analytics', 'data-structures-algorithms',
+                'cybersecurity', 'data-analytics', 
+                'data-structures-algorithms',
                 'project-management', 'networking', 'database', 'linux',
                 'system-design', 'computer-science'
             ]
