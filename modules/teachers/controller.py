@@ -1,7 +1,6 @@
 from typing import List, Optional
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import get_db
 from .service import TeacherService
 from .model import (
     TeacherProfile,
@@ -20,7 +19,7 @@ class TeacherController:
     async def apply_as_teacher(
         profile_data: TeacherProfileCreate,
         user_id: str,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession
     ) -> TeacherProfile:
         """
         Apply to become a teacher
@@ -37,7 +36,7 @@ class TeacherController:
     async def update_teacher_profile(
         profile_data: TeacherProfileUpdate,
         user_id: str,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession
     ) -> TeacherProfile:
         """
         Update teacher profile
@@ -55,7 +54,7 @@ class TeacherController:
     @staticmethod
     async def get_my_teacher_profile(
         user_id: str,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession
     ) -> TeacherWithQualifications:
         """
         Get current user's teacher profile with qualifications
@@ -82,7 +81,7 @@ class TeacherController:
     @staticmethod
     async def check_eligibility(
         user_id: str,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession
     ) -> dict:
         """
         Check teaching eligibility
@@ -92,7 +91,7 @@ class TeacherController:
     @staticmethod
     async def get_my_qualifications(
         user_id: str,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession
     ) -> List[TeacherQualification]:
         """
         Get current user's teaching qualifications
@@ -103,7 +102,7 @@ class TeacherController:
     async def process_quiz_result(
         quiz_attempt_id: str,
         user_id: str,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession
     ) -> Optional[TeacherQualification]:
         """
         Process quiz result to create qualification if eligible
@@ -117,11 +116,28 @@ class TeacherController:
         return qualification
 
     @staticmethod
+    async def apply_to_teach_subject(
+        certification_id: int,
+        user_id: str,
+        db: AsyncSession
+    ) -> TeacherQualification:
+        """
+        Apply to teach a specific subject/certification
+        """
+        try:
+            qualification = await TeacherService.apply_to_teach_subject(
+                db, user_id, certification_id
+            )
+            return qualification
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    @staticmethod
     async def admin_approve_teacher(
         teacher_id: int,
         approval_data: AdminApprovalRequest,
         admin_user_id: str,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession
     ) -> TeacherProfile:
         """
         Admin approval/rejection of teacher application
@@ -138,12 +154,12 @@ class TeacherController:
 
     @staticmethod
     async def list_teachers(
+        db: AsyncSession,
         status: Optional[TeacherStatusEnum] = None,
         is_available: Optional[bool] = None,
         category_id: Optional[int] = None,
         skip: int = 0,
-        limit: int = 100,
-        db: AsyncSession = Depends(get_db)
+        limit: int = 100
     ) -> List[TeacherProfile]:
         """
         List teachers with filters
@@ -155,7 +171,7 @@ class TeacherController:
     @staticmethod
     async def get_teacher_profile(
         teacher_id: int,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession
     ) -> TeacherWithQualifications:
         """
         Get teacher profile by ID with qualifications

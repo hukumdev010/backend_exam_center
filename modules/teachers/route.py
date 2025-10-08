@@ -3,7 +3,7 @@ from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from auth import get_current_user, admin_required, UserSession
-from modules.rbac.decorators import require_policies, require_admin
+from modules.rbac.decorators import require_policies
 from .controller import TeacherController
 from .model import (
     TeacherProfile,
@@ -62,32 +62,47 @@ async def get_my_teacher_profile(
 
 @router.get("/me/eligibility")
 async def check_teaching_eligibility(
-    current_user: dict = Depends(get_current_user),
+    current_user: UserSession = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Check if current user is eligible to become a teacher
     """
-    return await TeacherController.check_eligibility(current_user["id"], db)
+    return await TeacherController.check_eligibility(current_user.user.id, db)
 
 
 @router.get("/me/qualifications", response_model=List[TeacherQualification])
 async def get_my_qualifications(
-    current_user: dict = Depends(get_current_user),
+    current_user: UserSession = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Get current user's teaching qualifications
     """
     return await TeacherController.get_my_qualifications(
-        current_user["id"], db
+        current_user.user.id, db
+    )
+
+
+@router.post("/apply-subject/{certification_id}")
+async def apply_to_teach_subject(
+    certification_id: int,
+    current_user: UserSession = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Apply to teach a specific subject/certification 
+    (requires 90%+ score in that certification)
+    """
+    return await TeacherController.apply_to_teach_subject(
+        certification_id, current_user.user.id, db
     )
 
 
 @router.post("/process-quiz/{quiz_attempt_id}")
 async def process_quiz_for_qualification(
     quiz_attempt_id: str,
-    current_user: dict = Depends(get_current_user),
+    current_user: UserSession = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -95,7 +110,7 @@ async def process_quiz_for_qualification(
     This should be called automatically after quiz completion
     """
     qualification = await TeacherController.process_quiz_result(
-        quiz_attempt_id, current_user["id"], db
+        quiz_attempt_id, current_user.user.id, db
     )
     
     if qualification:
@@ -109,8 +124,7 @@ async def process_quiz_for_qualification(
         }
 
 
-@router.get("/", response_model=List[TeacherProfile],
-            dependencies=[Depends(require_policies("readTeacher"))])
+@router.get("/", response_model=List[TeacherProfile])
 async def list_teachers(
     status: Optional[TeacherStatusEnum] = Query(None),
     is_available: Optional[bool] = Query(None),
@@ -123,12 +137,11 @@ async def list_teachers(
     List teachers with filters
     """
     return await TeacherController.list_teachers(
-        status, is_available, category_id, skip, limit, db
+        db, status, is_available, category_id, skip, limit
     )
 
 
-@router.get("/{teacher_id}", response_model=TeacherWithQualifications,
-            dependencies=[Depends(require_policies("readTeacher"))])
+@router.get("/{teacher_id}", response_model=TeacherWithQualifications)
 async def get_teacher_profile(
     teacher_id: int,
     db: AsyncSession = Depends(get_db)

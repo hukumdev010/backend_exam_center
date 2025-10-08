@@ -40,3 +40,26 @@ class UserProfile(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class UserQualification(BaseModel):
+    """User qualification model"""
+    id: int
+    certification_name: str
+    category_name: str
+    score: int
+    qualified_at: datetime
+    can_teach: bool  # True if score >= 90%
+    is_teaching: bool  # True if already applied as teacher for this subject
+    
+    class Config:
+        from_attributes = True
+
+
+class UserQualifications(BaseModel):
+    """User qualifications response model"""
+    qualifications: List[UserQualification]
+    total_count: int
+    
+    class Config:
+        from_attributes = True

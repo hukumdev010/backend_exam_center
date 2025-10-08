@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from auth import get_current_user, UserSession
 from .service import UserService
-from .model import UserActivity, UserProfile
+from .model import UserActivity, UserProfile, UserQualifications
 
 
 class UserController:
@@ -32,4 +32,14 @@ class UserController:
         """Get current user's activity with limit"""
         return await UserService.get_user_activity(
             db, current_user.user.id, limit
+        )
+
+    @staticmethod
+    async def get_my_qualifications(
+        current_user: UserSession,
+        db: AsyncSession
+    ) -> UserQualifications:
+        """Get current user's qualifications (passed certifications)"""
+        return await UserService.get_user_qualifications(
+            db, current_user.user.id
         )

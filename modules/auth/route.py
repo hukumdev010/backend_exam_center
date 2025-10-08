@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from database import get_db
 from .controller import AuthController
 from .model import GoogleAuthURL
 
@@ -12,10 +14,16 @@ auth_controller = AuthController()
 async def get_current_user(authorization: str = Header(None)):
     """Get current user info from session"""
     if not authorization:
-        raise HTTPException(status_code=401, detail="Authorization header required")
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization header required"
+        )
     
     if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authorization header format"
+        )
     
     token = authorization.replace("Bearer ", "", 1)
     return await auth_controller.get_current_user(token)
@@ -25,10 +33,16 @@ async def get_current_user(authorization: str = Header(None)):
 async def logout(authorization: str = Header(None)):
     """Logout user by removing session"""
     if not authorization:
-        raise HTTPException(status_code=401, detail="Authorization header required")
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization header required"
+        )
     
     if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authorization header format"
+        )
     
     token = authorization.replace("Bearer ", "", 1)
     return await auth_controller.logout(token)
@@ -41,9 +55,13 @@ async def get_google_auth_url():
 
 
 @router.get("/callback/google")
-async def google_callback(code: str = None, error: str = None):
+async def google_callback(
+    code: str = None,
+    error: str = None,
+    db: AsyncSession = Depends(get_db)
+):
     """Handle Google OAuth2 callback"""
-    return await auth_controller.google_callback(code, error)
+    return await auth_controller.google_callback(code, error, db)
 
 
 @router.post("/logout/simple")

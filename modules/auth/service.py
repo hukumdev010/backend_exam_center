@@ -4,8 +4,10 @@ from urllib.parse import urlencode
 
 import httpx
 from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from sessions import set_user_session
+from modules.users.service import UserService
 from .model import GoogleAuthURL
 
 
@@ -76,17 +78,22 @@ class AuthService:
 
         return user_response.json()
 
-    async def create_user_session(self, user_info: dict) -> str:
-        """Create a user session and return session token"""
+    async def create_user_session(
+        self, user_info: dict, db: AsyncSession
+    ) -> str:
+        """Create or update user in database and create a session"""
+        # Create or update user in database
+        user = await UserService.create_or_update_user(db, user_info)
+        
         # Create a simple token (in production, use proper JWT)
         session_token = str(uuid.uuid4())
 
-        # Store user session (in production, use proper session storage)
+        # Store user session data
         user_data = {
-            "id": user_info.get("id"),
-            "email": user_info.get("email"),
-            "name": user_info.get("name"),
-            "image": user_info.get("picture"),
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "image": user.image,
         }
 
         # Store in session

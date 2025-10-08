@@ -2,6 +2,7 @@ import os
 
 from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from sessions import get_user_session, remove_user_session
 from .service import AuthService
@@ -30,7 +31,12 @@ class AuthController:
         """Get Google OAuth2 authorization URL"""
         return self.auth_service.get_google_auth_url()
 
-    async def google_callback(self, code: str = None, error: str = None):
+    async def google_callback(
+        self,
+        code: str = None,
+        error: str = None,
+        db: AsyncSession = None
+    ):
         """Handle Google OAuth2 callback"""
         if error:
             raise HTTPException(
@@ -52,9 +58,9 @@ class AuthController:
             # Get user info
             user_info = await self.auth_service.get_user_info(access_token)
             
-            # Create session
+            # Create session and persist user to database
             session_token = await self.auth_service.create_user_session(
-                user_info
+                user_info, db
             )
             
             # Redirect to frontend with success

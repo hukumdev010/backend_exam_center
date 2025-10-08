@@ -1,13 +1,14 @@
 """
 RBAC Service Layer
 
-This module provides services for Role-Based Access Control (RBAC) functionality
-including policy checking, role management, permission management, and user role assignments.
+This module provides services for Role-Based Access Control (RBAC)
+functionality including policy checking, role management, permission
+management, and user role assignments.
 """
-from typing import List, Optional, Dict, Set
+from typing import List, Optional, Set
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy import select, and_
+from sqlalchemy import select
 from models import Policy, Permission, Role, User
 
 
@@ -17,7 +18,8 @@ class RBACService:
     @staticmethod
     async def get_user_policies(user_id: str, db: AsyncSession) -> Set[str]:
         """
-        Get all policy names that a user has access to through their roles and permissions.
+        Get all policy names that a user has access to through their roles
+        and permissions.
         
         Args:
             user_id: The user ID
@@ -31,7 +33,9 @@ class RBACService:
             select(User)
             .options(
                 selectinload(User.roles).selectinload(Role.policies),
-                selectinload(User.roles).selectinload(Role.permissions).selectinload(Permission.policies)
+                selectinload(User.roles)
+                .selectinload(Role.permissions)
+                .selectinload(Permission.policies)
             )
             .where(User.id == user_id)
         )
@@ -57,7 +61,9 @@ class RBACService:
         return policies
 
     @staticmethod
-    async def has_policy(user_id: str, policy_name: str, db: AsyncSession) -> bool:
+    async def has_policy(
+        user_id: str, policy_name: str, db: AsyncSession
+    ) -> bool:
         """
         Check if a user has access to a specific policy.
         
@@ -73,7 +79,9 @@ class RBACService:
         return policy_name in user_policies
 
     @staticmethod
-    async def has_any_policy(user_id: str, policy_names: List[str], db: AsyncSession) -> bool:
+    async def has_any_policy(
+        user_id: str, policy_names: List[str], db: AsyncSession
+    ) -> bool:
         """
         Check if a user has access to any of the specified policies.
         
@@ -89,7 +97,9 @@ class RBACService:
         return any(policy in user_policies for policy in policy_names)
 
     @staticmethod
-    async def has_all_policies(user_id: str, policy_names: List[str], db: AsyncSession) -> bool:
+    async def has_all_policies(
+        user_id: str, policy_names: List[str], db: AsyncSession
+    ) -> bool:
         """
         Check if a user has access to all of the specified policies.
         
@@ -151,7 +161,9 @@ class RBACService:
             return False
 
     @staticmethod
-    async def remove_role_from_user(user_id: str, role_id: int, db: AsyncSession) -> bool:
+    async def remove_role_from_user(
+        user_id: str, role_id: int, db: AsyncSession
+    ) -> bool:
         """
         Remove a role from a user.
         
@@ -346,7 +358,10 @@ class RBACService:
             
             # Attach permissions if provided
             if permission_ids:
-                permission_stmt = select(Permission).where(Permission.id.in_(permission_ids))
+                permission_stmt = (
+                    select(Permission)
+                    .where(Permission.id.in_(permission_ids))
+                )
                 permission_result = await db.execute(permission_stmt)
                 permissions = permission_result.scalars().all()
                 role.permissions.extend(permissions)
@@ -362,7 +377,9 @@ class RBACService:
             return None
 
     @staticmethod
-    async def assign_default_roles_to_user(user_id: str, db: AsyncSession) -> bool:
+    async def assign_default_roles_to_user(
+        user_id: str, db: AsyncSession
+    ) -> bool:
         """
         Assign default roles to a new user.
         
@@ -375,7 +392,7 @@ class RBACService:
         """
         try:
             # Get all default roles
-            stmt = select(Role).where(Role.is_default == True)
+            stmt = select(Role).where(Role.is_default.is_(True))
             result = await db.execute(stmt)
             default_roles = result.scalars().all()
             

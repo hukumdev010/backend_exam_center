@@ -171,7 +171,9 @@ class RBACController:
         return list(permissions), total
 
     @staticmethod
-    async def get_permission(permission_id: int, db: AsyncSession) -> Permission:
+    async def get_permission(
+        permission_id: int, db: AsyncSession
+    ) -> Permission:
         """Get permission by ID with policies"""
         stmt = select(Permission).options(
             selectinload(Permission.policies)
@@ -275,7 +277,7 @@ class RBACController:
         """List all roles with optional search"""
         query = select(Role).options(
             selectinload(Role.policies),
-            selectinload(Role.permissions)
+            selectinload(Role.permissions).selectinload(Permission.policies)
         )
         
         if search:
@@ -307,7 +309,7 @@ class RBACController:
         """Get role by ID with policies and permissions"""
         stmt = select(Role).options(
             selectinload(Role.policies),
-            selectinload(Role.permissions)
+            selectinload(Role.permissions).selectinload(Permission.policies)
         ).where(Role.id == role_id)
         
         result = await db.execute(stmt)
@@ -418,7 +420,10 @@ class RBACController:
         db: AsyncSession = None
     ) -> Tuple[List[User], int]:
         """List users with their roles"""
-        query = select(User).options(selectinload(User.roles))
+        query = select(User).options(
+            selectinload(User.roles).selectinload(Role.policies),
+            selectinload(User.roles).selectinload(Role.permissions).selectinload(Permission.policies)
+        )
         
         if search:
             query = query.where(
@@ -447,7 +452,10 @@ class RBACController:
     @staticmethod
     async def get_user_roles(user_id: str, db: AsyncSession) -> User:
         """Get user with roles"""
-        stmt = select(User).options(selectinload(User.roles)).where(
+        stmt = select(User).options(
+            selectinload(User.roles).selectinload(Role.policies),
+            selectinload(User.roles).selectinload(Role.permissions).selectinload(Permission.policies)
+        ).where(
             User.id == user_id
         )
         result = await db.execute(stmt)

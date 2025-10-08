@@ -1,10 +1,11 @@
 """
 RBAC Management Routes
 
-Admin API endpoints for managing roles, permissions, policies, and user assignments.
+Admin API endpoints for managing roles, permissions, policies,
+and user assignments.
 """
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth import get_current_user
@@ -14,20 +15,30 @@ from modules.rbac.decorators import require_policies
 from .controller import RBACController
 from .model import (
     PolicyBase, PolicyCreate, PolicyUpdate, PolicyResponse,
-    PermissionBase, PermissionCreate, PermissionUpdate, PermissionResponse,
-    RoleBase, RoleCreate, RoleUpdate, RoleResponse,
+    PermissionCreate, PermissionUpdate, PermissionResponse,
+    RoleCreate, RoleUpdate, RoleResponse,
     UserRoleAssignment, UserRoleResponse, PaginatedResponse
 )
 
-router = APIRouter(prefix="/rbac", tags=["RBAC Management"])
+router = APIRouter(prefix="/rbac")
 
 
 # Policy Management
 @router.get("/policies", response_model=PaginatedResponse[PolicyResponse])
 async def list_policies(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(100, ge=1, le=1000, description="Number of records to return"),
-    search: Optional[str] = Query(None, description="Search in policy name/description"),
+    limit: int = Query(
+        100,
+        ge=1,
+        le=1000,
+        description=(
+            "Number of records to return"
+        )
+    ),
+    search: Optional[str] = Query(
+        None,
+        description="Search in policy name/description"
+    ),
     current_user: User = Depends(require_policies(["managePolicies"])),
     db: AsyncSession = Depends(get_db)
 ):
@@ -55,7 +66,11 @@ async def get_policy(
     return PolicyResponse.model_validate(policy)
 
 
-@router.post("/policies", response_model=PolicyResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/policies",
+    response_model=PolicyResponse,
+    status_code=status.HTTP_201_CREATED
+)
 async def create_policy(
     policy_data: PolicyCreate,
     current_user: User = Depends(require_policies(["managePolicies"])),
@@ -90,11 +105,21 @@ async def delete_policy(
 
 
 # Permission Management
-@router.get("/permissions", response_model=PaginatedResponse[PermissionResponse])
+@router.get(
+    "/permissions",
+    response_model=PaginatedResponse[PermissionResponse]
+)
 async def list_permissions(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(100, ge=1, le=1000, description="Number of records to return"),
-    search: Optional[str] = Query(None, description="Search in permission name/description"),
+    limit: int = Query(
+        100,
+        ge=1,
+        le=1000,
+        description="Number of records to return"
+    ),
+    search: Optional[str] = Query(
+        None, description="Search in permission name/description"
+    ),
     current_user: User = Depends(require_policies(["managePermissions"])),
     db: AsyncSession = Depends(get_db)
 ):
@@ -104,7 +129,10 @@ async def list_permissions(
     )
     
     return PaginatedResponse(
-        items=[PermissionResponse.model_validate(permission) for permission in permissions],
+        items=[
+            PermissionResponse.model_validate(permission)
+            for permission in permissions
+        ],
         total=total,
         skip=skip,
         limit=limit
@@ -122,11 +150,14 @@ async def get_permission(
     return PermissionResponse.model_validate(permission)
 
 
-@router.post("/permissions", response_model=PermissionResponse, status_code=status.HTTP_201_CREATED)
-@require_policies(["managePermissions"])
+@router.post(
+    "/permissions",
+    response_model=PermissionResponse,
+    status_code=status.HTTP_201_CREATED
+)
 async def create_permission(
     permission_data: PermissionCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_policies(["managePermissions"])),
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new permission"""
@@ -142,15 +173,21 @@ async def update_permission(
     db: AsyncSession = Depends(get_db)
 ):
     """Update permission"""
-    permission = await RBACController.update_permission(permission_id, permission_data, db)
+    permission = await RBACController.update_permission(
+        permission_id,
+        permission_data,
+        db
+    )
     return PermissionResponse.model_validate(permission)
 
 
-@router.delete("/permissions/{permission_id}", status_code=status.HTTP_204_NO_CONTENT)
-@require_policies(["managePermissions"])
+@router.delete(
+    "/permissions/{permission_id}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
 async def delete_permission(
     permission_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_policies(["managePermissions"])),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete permission"""
@@ -160,12 +197,15 @@ async def delete_permission(
 
 # Role Management
 @router.get("/roles", response_model=PaginatedResponse[RoleResponse])
-@require_policies(["manageRoles"])
 async def list_roles(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(100, ge=1, le=1000, description="Number of records to return"),
-    search: Optional[str] = Query(None, description="Search in role name/description"),
-    current_user: User = Depends(get_current_user),
+    limit: int = Query(
+        100, ge=1, le=1000, description="Number of records to return"
+    ),
+    search: Optional[str] = Query(
+        None, description="Search in role name/description"
+    ),
+    current_user: User = Depends(require_policies(["manageRoles"])),
     db: AsyncSession = Depends(get_db)
 ):
     """List all roles with pagination and search"""
@@ -182,10 +222,9 @@ async def list_roles(
 
 
 @router.get("/roles/{role_id}", response_model=RoleResponse)
-@require_policies(["manageRoles"])
 async def get_role(
     role_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_policies(["manageRoles"])),
     db: AsyncSession = Depends(get_db)
 ):
     """Get role by ID"""
@@ -193,11 +232,12 @@ async def get_role(
     return RoleResponse.model_validate(role)
 
 
-@router.post("/roles", response_model=RoleResponse, status_code=status.HTTP_201_CREATED)
-@require_policies(["manageRoles"])
+@router.post(
+    "/roles", response_model=RoleResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_role(
     role_data: RoleCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_policies(["manageRoles"])),
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new role"""
@@ -206,11 +246,10 @@ async def create_role(
 
 
 @router.put("/roles/{role_id}", response_model=RoleResponse)
-@require_policies(["manageRoles"])
 async def update_role(
     role_id: int,
     role_data: RoleUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_policies(["manageRoles"])),
     db: AsyncSession = Depends(get_db)
 ):
     """Update role"""
@@ -219,10 +258,9 @@ async def update_role(
 
 
 @router.delete("/roles/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
-@require_policies(["manageRoles"])
 async def delete_role(
     role_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_policies(["manageRoles"])),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete role"""
@@ -232,12 +270,15 @@ async def delete_role(
 
 # User Role Management
 @router.get("/users", response_model=PaginatedResponse[UserRoleResponse])
-@require_policies(["manageUserRoles"])
 async def list_users_with_roles(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(100, ge=1, le=1000, description="Number of records to return"),
-    search: Optional[str] = Query(None, description="Search in user email/name"),
-    current_user: User = Depends(get_current_user),
+    limit: int = Query(
+        100, ge=1, le=1000, description="Number of records to return"
+    ),
+    search: Optional[str] = Query(
+        None, description="Search in user email/name"
+    ),
+    current_user: User = Depends(require_policies(["manageUserRoles"])),
     db: AsyncSession = Depends(get_db)
 ):
     """List users with their roles"""
@@ -254,10 +295,9 @@ async def list_users_with_roles(
 
 
 @router.get("/users/{user_id}/roles", response_model=UserRoleResponse)
-@require_policies(["manageUserRoles"])
 async def get_user_roles(
     user_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_policies(["manageUserRoles"])),
     db: AsyncSession = Depends(get_db)
 ):
     """Get user roles by user ID"""
@@ -266,10 +306,9 @@ async def get_user_roles(
 
 
 @router.post("/users/assign-roles", response_model=UserRoleResponse)
-@require_policies(["manageUserRoles"])
 async def assign_roles_to_user(
     assignment: UserRoleAssignment,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_policies(["manageUserRoles"])),
     db: AsyncSession = Depends(get_db)
 ):
     """Assign roles to user"""
@@ -277,12 +316,13 @@ async def assign_roles_to_user(
     return UserRoleResponse.model_validate(user)
 
 
-@router.delete("/users/{user_id}/roles/{role_id}", response_model=UserRoleResponse)
-@require_policies(["manageUserRoles"])
+@router.delete(
+        "/users/{user_id}/roles/{role_id}", response_model=UserRoleResponse
+        )
 async def remove_role_from_user(
     user_id: str,
     role_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_policies(["manageUserRoles"])),
     db: AsyncSession = Depends(get_db)
 ):
     """Remove specific role from user"""

@@ -87,14 +87,17 @@ class RBACSeeder:
             ("createRole", "Create new roles", "role", "create"),
             ("updateRole", "Update existing roles", "role", "update"),
             ("deleteRole", "Delete roles", "role", "delete"),
+            ("manageRoles", "Full role management access", "role", "manage"),
             ("readPermission", "Read permissions", "permission", "read"),
             ("createPermission", "Create new permissions", "permission", "create"),
             ("updatePermission", "Update existing permissions", "permission", "update"),
             ("deletePermission", "Delete permissions", "permission", "delete"),
+            ("managePermissions", "Full permission management access", "permission", "manage"),
             ("readPolicy", "Read policies", "policy", "read"),
             ("createPolicy", "Create new policies", "policy", "create"),
             ("updatePolicy", "Update existing policies", "policy", "update"),
             ("deletePolicy", "Delete policies", "policy", "delete"),
+            ("managePolicies", "Full policy management access", "policy", "manage"),
         ]
         
         print("Creating policies...")

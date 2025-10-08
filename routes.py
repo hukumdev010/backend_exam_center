@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from modules.auth.route import router as auth_router
 from modules.categories.route import router as categories_router
 from modules.certifications.route import router as certifications_router
+from modules.certificates.route import router as certificates_router
 from modules.progress.route import router as progress_router
 from modules.quiz_attempts.route import router as quiz_attempts_router
 from modules.ai_assistant.route import router as ai_assistant_router
@@ -41,6 +42,13 @@ def include_routers(app: FastAPI) -> None:
         certifications_router,
         prefix="/api/certifications",
         tags=["certifications"]
+    )
+    
+    # Certificates routes
+    app.include_router(
+        certificates_router,
+        prefix="/api/certificates",
+        tags=["certificates"]
     )
     
     # Progress routes

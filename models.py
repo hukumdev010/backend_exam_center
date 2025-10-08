@@ -23,16 +23,39 @@ Base = declarative_base()
 user_roles = Table(
     'user_roles',
     Base.metadata,
-    Column('user_id', String, ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
-    Column('role_id', Integer, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True),
+    Column(
+        'user_id',
+        String,
+        ForeignKey('users.id', ondelete='CASCADE'),
+        primary_key=True
+    ),
+    Column(
+        'role_id',
+        Integer,
+        ForeignKey(
+            'roles.id',
+            ondelete='CASCADE'
+        ),
+        primary_key=True
+    ),
     Column('assigned_at', DateTime, default=func.now()),
-    Column('assigned_by', String, ForeignKey('users.id', name='fk_user_roles_assigned_by'), nullable=True)
+    Column(
+        'assigned_by',
+        String,
+        ForeignKey('users.id', name='fk_user_roles_assigned_by'),
+        nullable=True
+    )
 )
 
 role_policies = Table(
     'role_policies',
     Base.metadata,
-    Column('role_id', Integer, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True),
+    Column(
+        'role_id',
+        Integer,
+        ForeignKey('roles.id', ondelete='CASCADE'),
+        primary_key=True
+    ),
     Column('policy_id', Integer, ForeignKey('policies.id', ondelete='CASCADE'), primary_key=True),
     Column('created_at', DateTime, default=func.now())
 )
@@ -40,8 +63,18 @@ role_policies = Table(
 role_permissions = Table(
     'role_permissions',
     Base.metadata,
-    Column('role_id', Integer, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True),
-    Column('permission_id', Integer, ForeignKey('permissions.id', ondelete='CASCADE'), primary_key=True),
+    Column(
+        'role_id',
+        Integer,
+        ForeignKey('roles.id', ondelete='CASCADE'),
+        primary_key=True
+    ),
+    Column(
+        'permission_id',
+        Integer,
+        ForeignKey('permissions.id', ondelete='CASCADE'),
+        primary_key=True
+    ),
     Column('created_at', DateTime, default=func.now())
 )
 
@@ -321,6 +354,11 @@ class User(Base):
         back_populates="student",
         cascade="all, delete-orphan"
     )
+    certificates = relationship(
+        "Certificate",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
 
 class VerificationToken(Base):
@@ -591,3 +629,36 @@ class SessionBooking(Base):
     # Relationships
     session = relationship("TeachingSession", back_populates="bookings")
     student = relationship("User", back_populates="session_bookings")
+
+
+# Certificate Model
+class Certificate(Base):
+    __tablename__ = "certificates"
+
+    id = Column(String, primary_key=True)
+    user_id = Column(
+        String,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    quiz_attempt_id = Column(
+        String,
+        ForeignKey("quiz_attempts.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True  # One certificate per quiz attempt
+    )
+    certification_id = Column(
+        Integer,
+        ForeignKey("certifications.id"),
+        nullable=False
+    )
+    score = Column(Integer, nullable=False)
+    total_questions = Column(Integer, nullable=False)
+    pdf_filename = Column(String, nullable=True)  # Stored PDF filename
+    issued_at = Column(DateTime, default=func.now())
+    created_at = Column(DateTime, default=func.now())
+
+    # Relationships
+    user = relationship("User", back_populates="certificates")
+    quiz_attempt = relationship("QuizAttempt")
+    certification = relationship("Certification")

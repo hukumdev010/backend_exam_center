@@ -41,6 +41,11 @@ class QuizAttemptService:
                 db, user_id, quiz_attempt
             )
 
+            # Auto-generate certificate if score is 80% or above
+            await self._check_and_create_certificate(
+                db, user_id, quiz_attempt
+            )
+
             return quiz_attempt
         except Exception:
             raise HTTPException(
@@ -89,4 +94,32 @@ class QuizAttemptService:
             )
         except Exception:
             # Don't fail the quiz attempt if qualification creation fails
+            pass
+
+    async def _check_and_create_certificate(
+        self,
+        db,
+        user_id: str,
+        quiz_attempt: QuizAttemptModel
+    ) -> None:
+        """
+        Check if user qualifies for a certificate and create it
+        """
+        try:
+            # Import here to avoid circular imports
+            from modules.certificates.service import CertificateService
+
+            certificate_service = CertificateService()
+
+            # This will create certificate if score >= 80%
+            await certificate_service.create_certificate(
+                db,
+                user_id,
+                quiz_attempt.id,
+                quiz_attempt.certification_id,
+                quiz_attempt.score,
+                quiz_attempt.total_questions
+            )
+        except Exception:
+            # Don't fail the quiz attempt if certificate creation fails
             pass

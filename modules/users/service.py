@@ -1,9 +1,15 @@
 from typing import Optional
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy import desc as sql_desc
 from sqlalchemy.ext.asyncio import AsyncSession
-from models import User, QuizAttempt, UserProgress, Certification
-from .model import UserActivityItem, UserActivity
+from sqlalchemy.exc import IntegrityError
+from models import (
+    User, QuizAttempt, UserProgress, Certification, Category,
+    TeacherQualification, TeacherProfile
+)
+from .model import (
+    UserActivityItem, UserActivity, UserQualifications, UserQualification
+)
 
 
 class UserService:
@@ -53,8 +59,10 @@ class UserService:
         
         # Add quiz attempts
         for attempt, cert_name in quiz_attempts:
-            desc = (f"Scored {attempt.score}% "
-                    f"({attempt.correct_answers}/{attempt.total_questions})")
+            desc = (
+                f"Scored {attempt.score}% "
+                f"({attempt.correct_answers}/{attempt.total_questions})"
+            )
             activities.append(UserActivityItem(
                 id=attempt.id,
                 type="quiz_attempt",
@@ -102,4 +110,133 @@ class UserService:
         return UserActivity(
             activities=activities,
             total_count=total_count
+        )
+
+    @staticmethod
+    async def create_or_update_user(
+        db: AsyncSession, user_info: dict
+    ) -> User:
+        """Create a new user or update existing user from OAuth data"""
+        
+        # Try to find existing user by email
+        existing_user_result = await db.execute(
+            select(User).where(User.email == user_info.get("email"))
+        )
+        existing_user = existing_user_result.scalar_one_or_none()
+        
+        if existing_user:
+            # Update existing user's information
+            existing_user.name = user_info.get("name", existing_user.name)
+            existing_user.image = user_info.get("picture", existing_user.image)
+            # Update email verification if not set
+            if (
+                not existing_user.email_verified
+                and user_info.get("verified_email")
+            ):
+                from datetime import datetime
+                existing_user.email_verified = datetime.utcnow()
+            
+            await db.commit()
+            await db.refresh(existing_user)
+            return existing_user
+        else:
+            # Create new user
+            new_user = User(
+                id=user_info.get("id"),
+                name=user_info.get("name"),
+                email=user_info.get("email"),
+                image=user_info.get("picture")
+            )
+            
+            # Set email verification if verified
+            if user_info.get("verified_email"):
+                from datetime import datetime
+                new_user.email_verified = datetime.utcnow()
+            
+            try:
+                db.add(new_user)
+                await db.commit()
+                await db.refresh(new_user)
+                return new_user
+            except IntegrityError:
+                # Handle race condition where user was created by
+                # another request
+                await db.rollback()
+                # Try to fetch the user that was just created
+                result = await db.execute(
+                    select(User).where(User.email == user_info.get("email"))
+                )
+                return result.scalar_one()
+
+    @staticmethod
+    async def get_user_qualifications(
+        db: AsyncSession, user_id: str
+    ) -> UserQualifications:
+        """Get user's passed certifications that can qualify for teaching"""
+        
+        # Get all quiz attempts with score >= 80% (certificate eligible)
+        query = (
+            select(
+                QuizAttempt,
+                Certification.name.label('cert_name'),
+                Category.name.label('category_name')
+            )
+            .join(Certification, QuizAttempt.certification_id == Certification.id)
+            .join(Category, Certification.category_id == Category.id)
+            .where(
+                and_(
+                    QuizAttempt.user_id == user_id,
+                    QuizAttempt.score >= 80  # Must pass to be qualified
+                )
+            )
+            .order_by(sql_desc(QuizAttempt.completed_at))
+        )
+        
+        result = await db.execute(query)
+        quiz_attempts = result.fetchall()
+        
+        # Get existing teacher qualifications to check if user is already teaching
+        teacher_qualifications = await db.execute(
+            select(TeacherQualification)
+            .where(TeacherQualification.user_id == user_id)
+        )
+        existing_qualifications = {
+            tq.certification_id: tq for tq in teacher_qualifications.scalars().all()
+        }
+        
+        # Check if user has teacher profile
+        teacher_profile = await db.execute(
+            select(TeacherProfile)
+            .where(TeacherProfile.user_id == user_id)
+        )
+        has_teacher_profile = teacher_profile.scalar_one_or_none() is not None
+        
+        qualifications = []
+        seen_certifications = set()  # To handle multiple attempts for same cert
+        
+        for attempt, cert_name, category_name in quiz_attempts:
+            # Only include the highest score attempt for each certification
+            if attempt.certification_id in seen_certifications:
+                continue
+            seen_certifications.add(attempt.certification_id)
+            
+            can_teach = attempt.score >= 90  # Must score 90%+ to teach
+            is_teaching = (
+                has_teacher_profile and 
+                attempt.certification_id in existing_qualifications
+            )
+            
+            qualifications.append(UserQualification(
+                id=attempt.id,
+                certification_name=cert_name,
+                category_name=category_name,
+                score=attempt.score,
+                qualified_at=attempt.completed_at,
+                can_teach=can_teach,
+                is_teaching=is_teaching
+            ))
+        
+        return UserQualifications(
+            qualifications=qualifications,
+            total_count=len(qualifications)
         )
