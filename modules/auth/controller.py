@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from sessions import get_user_session, remove_user_session
 from .service import AuthService
+from .model import EmailPasswordLogin, UserRegister, LoginResponse, UserInfo
 
 
 class AuthController:
@@ -80,3 +81,37 @@ class AuthController:
         """Logout user (invalidate token)"""
         # In a real app, you'd invalidate the session/token
         return {"message": "Logged out successfully"}
+
+    async def login_with_email_password(self, login_data: EmailPasswordLogin, db: AsyncSession):
+        """Login with email and password"""
+        try:
+            session_token = await self.auth_service.login_with_email_password(login_data, db)
+            user_data = get_user_session(session_token)
+            
+            return LoginResponse(
+                access_token=session_token,
+                user=UserInfo(
+                    id=user_data["id"],
+                    email=user_data["email"],
+                    name=user_data["name"],
+                    image=user_data["image"]
+                )
+            )
+        except Exception as e:
+            raise HTTPException(status_code=401, detail=str(e))
+
+    async def register_user(self, user_data: UserRegister, db: AsyncSession):
+        """Register a new user"""
+        try:
+            user = await self.auth_service.register_user(user_data, db)
+            
+            return {
+                "message": "User registered successfully",
+                "user": {
+                    "id": user.id,
+                    "name": user.name,
+                    "email": user.email
+                }
+            }
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))

@@ -8,7 +8,13 @@ CERTIFICATION = {
     "duration": 90,
     "questions_count": 40,
     "category_slug": "spanish",
-    "is_active": True
+    "is_active": True,
+    "benefits": "Learn basic Spanish communication\nUnderstand everyday expressions\nIntroduce yourself and others\nHandle simple interactions",
+    "advantages": "Official certification recognized worldwide, gateway to Spanish-speaking cultures and business opportunities.",
+    "career_benefits": "Access to Spanish-speaking markets\nImprove job prospects in tourism\nQualify for international roles\nBuild foundation for advanced language skills",
+    "teaching_eligibility": False,
+    "min_score_for_teaching": 95,
+    "min_score_for_certificate": 70,
 }
 
 QUESTIONS = [

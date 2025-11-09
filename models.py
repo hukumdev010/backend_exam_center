@@ -206,6 +206,18 @@ class Certification(Base):
     questions_count = Column(Integer, nullable=True)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     is_active = Column(Boolean, default=True)
+    
+    # Quiz benefits and advantages
+    benefits = Column(Text, nullable=True)  # JSON or text benefits
+    advantages = Column(Text, nullable=True)  # JSON or text advantages
+    career_benefits = Column(Text, nullable=True)  # Career benefits
+    teaching_eligibility = Column(Boolean, default=False)  # Teacher eligible
+    min_score_for_teaching = Column(Integer, default=90)  # Min teaching score
+    min_score_for_certificate = Column(Integer, default=80)  # Min cert score
+    
+    # Syllabus and curriculum information
+    syllabus = Column(Text, nullable=True)  # Structured syllabus content (JSON)
+    
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
@@ -216,6 +228,12 @@ class Certification(Base):
         "UserProgress",
         back_populates="certification")
     quiz_attempts = relationship("QuizAttempt", back_populates="certification")
+    syllabus_modules = relationship(
+        "SyllabusModule",
+        back_populates="certification",
+        cascade="all, delete-orphan",
+        order_by="SyllabusModule.order_index"
+    )
 
 
 class Question(Base):
@@ -239,6 +257,11 @@ class Question(Base):
     answers = relationship(
         "Answer", back_populates="question", cascade="all, delete-orphan"
     )
+    ai_assistant = relationship(
+        "QuestionAIAssistant", 
+        back_populates="question", 
+        cascade="all, delete-orphan"
+    )
 
 
 class Answer(Base):
@@ -255,6 +278,32 @@ class Answer(Base):
 
     # Relationships
     question = relationship("Question", back_populates="answers")
+
+
+class QuestionAIAssistant(Base):
+    __tablename__ = "question_ai_assistant"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    question_id = Column(
+        Integer, ForeignKey("questions.id", ondelete="CASCADE"), nullable=False
+    )
+    # Hash of the question content to detect changes
+    question_hash = Column(String, nullable=False)
+    # AI assistant response content
+    ai_response = Column(Text, nullable=False)
+    # Model used for generation (e.g., "gemini-2.5-flash")
+    model_name = Column(String, default="gemini-2.5-flash")
+    # Token count for cost tracking
+    token_count = Column(Integer, nullable=True)
+    # Cache hit count for analytics
+    cache_hits = Column(Integer, default=0)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    question = relationship("Question", back_populates="ai_assistant")
+
+    __table_args__ = (UniqueConstraint("question_id", "question_hash"),)
 
 
 # NextAuth.js Models
@@ -312,6 +361,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     email_verified = Column(DateTime, nullable=True)
     image = Column(String, nullable=True)
+    password_hash = Column(String, nullable=True)  # For email/password authentication
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
@@ -662,3 +712,135 @@ class Certificate(Base):
     user = relationship("User", back_populates="certificates")
     quiz_attempt = relationship("QuizAttempt")
     certification = relationship("Certification")
+
+
+# Syllabus Content Models
+class SyllabusModule(Base):
+    __tablename__ = "syllabus_modules"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    certification_id = Column(
+        Integer,
+        ForeignKey("certifications.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    module_number = Column(Integer, nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    duration = Column(String, nullable=True)  # e.g., "Week 1", "2 hours"
+    order_index = Column(Integer, nullable=False)  # For ordering modules
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    certification = relationship("Certification", back_populates="syllabus_modules")
+    topics = relationship(
+        "SyllabusTopic", 
+        back_populates="module",
+        cascade="all, delete-orphan",
+        order_by="SyllabusTopic.order_index"
+    )
+    learning_objectives = relationship(
+        "ModuleLearningObjective",
+        back_populates="module",
+        cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        UniqueConstraint("certification_id", "module_number"),
+        UniqueConstraint("certification_id", "order_index")
+    )
+
+
+class SyllabusTopic(Base):
+    __tablename__ = "syllabus_topics"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    module_id = Column(
+        Integer,
+        ForeignKey("syllabus_modules.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    introduction = Column(Text, nullable=True)
+    order_index = Column(Integer, nullable=False)
+    estimated_duration = Column(String, nullable=True)  # e.g., "30 minutes"
+    is_active = Column(Boolean, default=True)
+    
+    # Content for creating YouTube videos
+    video_script_outline = Column(Text, nullable=True)  # What to teach in video
+    practical_examples = Column(Text, nullable=True)  # JSON array of examples
+    key_points = Column(Text, nullable=True)  # JSON array of key points
+    
+    # Video content when available
+    video_url = Column(String, nullable=True)  # YouTube URL
+    video_duration = Column(Integer, nullable=True)  # Duration in seconds
+    video_status = Column(String, default="planned")  # planned, scripted, recorded, published
+    
+    # Detailed comprehensive content (JSON format)
+    detailed_content = Column(Text, nullable=True)  # JSON content
+    
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    module = relationship("SyllabusModule", back_populates="topics")
+    content_sections = relationship(
+        "TopicContentSection",
+        back_populates="topic",
+        cascade="all, delete-orphan",
+        order_by="TopicContentSection.order_index"
+    )
+
+    __table_args__ = (
+        UniqueConstraint("module_id", "order_index"),
+    )
+
+
+class TopicContentSection(Base):
+    __tablename__ = "topic_content_sections"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    topic_id = Column(
+        Integer,
+        ForeignKey("syllabus_topics.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    section_type = Column(String, nullable=False)  # introduction, key_points, examples, what_to_teach, etc.
+    title = Column(String, nullable=True)
+    content = Column(Text, nullable=False)  # The actual content
+    order_index = Column(Integer, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    topic = relationship("SyllabusTopic", back_populates="content_sections")
+
+    __table_args__ = (
+        UniqueConstraint("topic_id", "order_index"),
+    )
+
+
+class ModuleLearningObjective(Base):
+    __tablename__ = "module_learning_objectives"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    module_id = Column(
+        Integer,
+        ForeignKey("syllabus_modules.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    objective = Column(String, nullable=False)
+    order_index = Column(Integer, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=func.now())
+
+    # Relationships
+    module = relationship("SyllabusModule", back_populates="learning_objectives")
+
+    __table_args__ = (
+        UniqueConstraint("module_id", "order_index"),
+    )

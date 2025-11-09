@@ -9,6 +9,12 @@ CERTIFICATION = {
     "questions_count": 60,
     "category_slug": "mathematics",
     "is_active": True,
+    "benefits": "Master advanced mathematical concepts\nBuild problem-solving skills\nPrepare for higher education\nDevelop analytical thinking",
+    "advantages": "Strong foundation for engineering and science courses, improved logical reasoning abilities.",
+    "career_benefits": "Qualify for STEM education paths\nBetter performance in competitive exams\nEssential for engineering and science careers\nImprove analytical and logical thinking skills",
+    "teaching_eligibility": True,
+    "min_score_for_teaching": 85,
+    "min_score_for_certificate": 75,
 }
 
 QUESTIONS = [

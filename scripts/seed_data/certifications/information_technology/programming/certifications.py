@@ -12,6 +12,10 @@ from .react_developer import CERTIFICATION as REACT_CERT
 from .csharp_programming import CERTIFICATION as CSHARP_CERT
 from .go_programming import CERTIFICATION as GO_CERT
 from .rust_programming import CERTIFICATION as RUST_CERT
+from .tailwind_css import CERTIFICATION as TAILWIND_CERT
+from .sql_fundamentals import CERTIFICATION as SQL_FUNDAMENTALS_CERT
+from .css_developer import CERTIFICATION as CSS_DEVELOPER_CERT
+from .fastapi_developer import CERTIFICATION as FASTAPI_DEVELOPER_CERT
 
 CERTIFICATIONS = [
     PYTHON_PCEP_CERT,
@@ -25,5 +29,9 @@ CERTIFICATIONS = [
     JAVA_PROG_2_CERT,
     CSHARP_CERT,
     GO_CERT,
-    RUST_CERT
+    RUST_CERT,
+    TAILWIND_CERT,
+    SQL_FUNDAMENTALS_CERT,
+    CSS_DEVELOPER_CERT,
+    FASTAPI_DEVELOPER_CERT
 ]

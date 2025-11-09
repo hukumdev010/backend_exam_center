@@ -5,7 +5,14 @@
 from typing import Any, Dict
 
 # In-memory session storage (use Redis or database in production)
-user_sessions: Dict[str, Dict[str, Any]] = {}
+user_sessions: Dict[str, Dict[str, Any]] = {
+    # Default mock session for testing - using existing user
+    "mock_token": {
+        "id": "112278074915864654062",
+        "email": "basnethukum789@gmail.com",
+        "name": "Hukum Basnet"
+    }
+}
 
 
 def get_user_session(token: str) -> Dict[str, Any] | None:

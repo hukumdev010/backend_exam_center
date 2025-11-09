@@ -15,6 +15,14 @@ class AnswerVerificationResponse(BaseModel):
     reference: Optional[str]
 
 
+class AIAssistantRequest(BaseModel):
+    question_id: int
+    question_hash: str
+    ai_response: str
+    model_name: Optional[str] = "gemini-2.5-flash"
+    token_count: Optional[int] = None
+
+
 class Answer(BaseModel):
     id: int
     text: str
@@ -62,6 +70,34 @@ class Certification(BaseModel):
     category_id: int
     questions: List[Question] = []
     category: Optional[Category] = None
+
+    class Config:
+        from_attributes = True
+
+
+class CertificationInfo(BaseModel):
+    id: int
+    name: str
+    slug: str
+    description: Optional[str]
+    level: Optional[str]
+    duration: Optional[int]
+    questions_count: Optional[int]
+    category: Optional[Category] = None
+    
+    # Benefits and advantages
+    benefits: Optional[str] = None
+    advantages: Optional[str] = None
+    career_benefits: Optional[str] = None
+    teaching_eligibility: bool = False
+    min_score_for_teaching: int = 90
+    min_score_for_certificate: int = 80
+    
+    # User progress info (if logged in)
+    has_started: bool = False
+    current_question: Optional[int] = None
+    progress_percentage: float = 0.0
+    user_score: Optional[int] = None
 
     class Config:
         from_attributes = True

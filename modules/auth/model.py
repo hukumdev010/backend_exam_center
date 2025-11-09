@@ -46,3 +46,14 @@ class LoginResponse(BaseModel):
 
 class LogoutResponse(BaseModel):
     message: str
+
+
+class EmailPasswordLogin(BaseModel):
+    email: str
+    password: str
+
+
+class UserRegister(BaseModel):
+    name: str
+    email: str
+    password: str

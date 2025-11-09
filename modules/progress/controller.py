@@ -1,6 +1,6 @@
 from fastapi import Depends
 
-from auth import UserSession, get_current_user
+from auth import UserSession
 from database import get_db
 from .service import ProgressService
 
@@ -11,7 +11,7 @@ class ProgressController:
 
     async def get_user_progress(
         self,
-        current_user: UserSession = Depends(get_current_user),
+        current_user: UserSession,
         db=Depends(get_db),
     ):
         """Get user progress for all certifications"""
@@ -22,7 +22,7 @@ class ProgressController:
     async def update_user_progress(
         self,
         progress_data: dict,
-        current_user: UserSession = Depends(get_current_user),
+        current_user: UserSession,
         db=Depends(get_db),
     ):
         """Update user progress for a certification"""

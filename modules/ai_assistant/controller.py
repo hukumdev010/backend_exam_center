@@ -5,13 +5,16 @@ class AIAssistantController:
     def __init__(self):
         self.ai_service = AIAssistantService()
 
-    async def chat_with_ai(self, request_data: dict):
+    async def chat_with_ai(self, request_data: dict, db=None):
         """Chat with AI assistant for exam help"""
         return await self.ai_service.chat_with_ai(
             request_data["message"],
             request_data.get("context"),
             request_data.get("current_question"),
-            request_data.get("conversation_history", [])
+            request_data.get("conversation_history", []),
+            request_data.get("question_id"),
+            request_data.get("question_hash"),
+            db
         )
 
     async def ai_health(self):

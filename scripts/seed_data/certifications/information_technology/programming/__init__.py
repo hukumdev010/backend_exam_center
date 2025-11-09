@@ -12,6 +12,8 @@ from . import (
     python_pcep,
     react_developer,
     rust_programming,
+    sql_fundamentals,
+    fastapi_developer,
     typescript_developer,
 )
 
@@ -31,7 +33,9 @@ modules = [
     csharp_programming,
     go_programming,
     rust_programming,
+    sql_fundamentals,
     typescript_developer,
+    fastapi_developer,
     advanced_typescript,
 ]
 

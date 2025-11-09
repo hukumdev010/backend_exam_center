@@ -1,7 +1,7 @@
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy import select, and_, desc
+from sqlalchemy import select, and_, or_, desc
 from models import (
     TeacherProfile,
     TeacherQualification,
@@ -242,6 +242,7 @@ class TeacherService:
     @staticmethod
     async def list_teachers(
         db: AsyncSession,
+        query: Optional[str] = None,
         status: Optional[TeacherStatusEnum] = None,
         is_available: Optional[bool] = None,
         category_id: Optional[int] = None,
@@ -256,6 +257,20 @@ class TeacherService:
         )
         
         conditions = []
+        
+        # Add search filter if query is provided
+        if query:
+            # Join with User table for name search
+            stmt = stmt.join(User, TeacherProfile.user_id == User.id)
+            
+            search_filter = or_(
+                User.first_name.ilike(f"%{query}%"),
+                User.last_name.ilike(f"%{query}%"),
+                TeacherProfile.bio.ilike(f"%{query}%"),
+                TeacherProfile.specializations.ilike(f"%{query}%")
+            )
+            conditions.append(search_filter)
+        
         if status is not None:
             conditions.append(
                 TeacherProfile.status == TeacherStatus(status.value)
@@ -338,6 +353,7 @@ class TeacherService:
                 qualifications_by_category[category_name] = []
             qualifications_by_category[category_name].append({
                 "certification_name": qual.certification.name if qual.certification else "Unknown",
+                "certification_slug": qual.certification.slug if qual.certification else "unknown",
                 "score_percentage": qual.score_percentage,
                 "qualified_at": qual.qualified_at.isoformat() if qual.qualified_at else None
             })

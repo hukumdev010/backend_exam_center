@@ -79,7 +79,9 @@ class UserService:
         for progress, cert_name in progress_updates:
             prog_id = (f"progress_{progress.user_id}_"
                        f"{progress.certification_id}")
-            desc = f"Progress: {progress.progress_percentage}% completed"
+            # Calculate progress percentage
+            progress_percentage = round((progress.current_question / progress.total_questions) * 100, 1) if progress.total_questions > 0 else 0
+            desc = f"Progress: {progress_percentage}% completed"
             activities.append(UserActivityItem(
                 id=prog_id,
                 type="progress_update",

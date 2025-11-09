@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from modules.auth import get_optional_user
@@ -11,7 +11,12 @@ from models import Question as QuestionModel
 from models import UserProgress as UserProgressModel
 
 from .controller import CertificationController
-from .model import AnswerSubmission, AnswerVerificationResponse
+from .model import (
+    AnswerSubmission, 
+    AnswerVerificationResponse, 
+    AIAssistantRequest,
+    CertificationInfo
+)
 
 router = APIRouter()
 certification_controller = CertificationController()
@@ -110,42 +115,14 @@ async def verify_answer(
                 db.add(user_progress)
             else:
                 # Update existing progress
-                update_data = {}
                 if is_correct:
-                    update_data["correct_answers"] = (
-                        UserProgressModel.correct_answers + 1
-                    )
-                    update_data["points"] = (
-                        UserProgressModel.points + points_earned
-                    )
-
-                if update_data:
-                    update_stmt = (
-                        update(UserProgressModel)
-                        .where(
-                            UserProgressModel.user_id == user_id,
-                            UserProgressModel.certification_id ==
-                            certification.id,
-                        )
-                        .values(**update_data)
-                    )
-                    await db.execute(update_stmt)
+                    user_progress.correct_answers += 1
+                    user_progress.points += points_earned
 
             await db.commit()
-
-            # Get updated total points
-            if user_progress:
-                total_points = user_progress.points + (
-                    points_earned if not user_progress.id else 0
-                )
-            else:
-                # Re-fetch to get updated points
-                progress_result = await db.execute(progress_stmt)
-                updated_progress = progress_result.scalar_one_or_none()
-                total_points = (
-                    updated_progress.points if updated_progress
-                    else points_earned
-                )
+            
+            # Get the updated total points
+            total_points = user_progress.points
 
         return AnswerVerificationResponse(
             is_correct=is_correct,
@@ -160,3 +137,66 @@ async def verify_answer(
     except Exception:
         await db.rollback()
         raise HTTPException(status_code=500, detail="Failed to verify answer")
+
+
+@router.post("/{slug}/save-ai-response")
+async def save_ai_response(
+    slug: str,
+    ai_request: AIAssistantRequest,
+    current_user=Depends(get_optional_user),
+    db=Depends(get_db),
+):
+    """Save AI assistant response for a question"""
+    try:
+        return await certification_controller.save_ai_assistant_response(
+            db, ai_request
+        )
+    except Exception as e:
+        print(f"Error saving AI response: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Failed to save AI response"
+        )
+
+
+@router.get("/{slug}/info", response_model=CertificationInfo)
+async def get_certification_info(
+    slug: str,
+    current_user=Depends(get_optional_user),
+    db=Depends(get_db),
+):
+    """Get certification info for quiz start page"""
+    user_id = current_user.user.id if current_user else None
+    return await certification_controller.get_certification_info(
+        slug, user_id, db
+    )
+
+
+@router.post("/{slug}/start")
+async def start_quiz(
+    slug: str,
+    current_user=Depends(get_optional_user),
+    db=Depends(get_db),
+):
+    """Start a quiz by creating initial progress record"""
+    if not current_user:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required to start quiz"
+        )
+    
+    return await certification_controller.start_quiz(
+        slug, current_user.user.id, db
+    )
+
+
+@router.get("/{slug}/syllabus")
+async def get_certification_syllabus(
+    slug: str,
+    current_user=Depends(get_optional_user),
+    db=Depends(get_db),
+):
+    """Get certification syllabus - accessible by qualified teachers or students"""
+    return await certification_controller.get_certification_syllabus(
+        slug, current_user, db
+    )

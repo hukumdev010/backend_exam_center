@@ -44,7 +44,7 @@ class UserProfile(BaseModel):
 
 class UserQualification(BaseModel):
     """User qualification model"""
-    id: int
+    id: str
     certification_name: str
     category_name: str
     score: int

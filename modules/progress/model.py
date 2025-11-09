@@ -41,6 +41,7 @@ class UserProgress(BaseModel):
     points: int
     is_completed: bool
     last_active_at: datetime
+    updated_at: datetime
     certification: Certification
 
     class Config:

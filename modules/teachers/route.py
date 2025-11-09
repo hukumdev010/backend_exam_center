@@ -124,8 +124,9 @@ async def process_quiz_for_qualification(
         }
 
 
-@router.get("/", response_model=List[TeacherProfile])
+@router.get("", response_model=List[TeacherProfile])
 async def list_teachers(
+    q: Optional[str] = Query(None, description="Search query"),
     status: Optional[TeacherStatusEnum] = Query(None),
     is_available: Optional[bool] = Query(None),
     category_id: Optional[int] = Query(None),
@@ -137,7 +138,7 @@ async def list_teachers(
     List teachers with filters
     """
     return await TeacherController.list_teachers(
-        db, status, is_available, category_id, skip, limit
+        db, q, status, is_available, category_id, skip, limit
     )
 
 

@@ -12,6 +12,8 @@ class ChatRequest(BaseModel):
     context: Optional[str] = None
     current_question: Optional[str] = None
     conversation_history: Optional[List[ChatMessage]] = []
+    question_id: Optional[int] = None
+    question_hash: Optional[str] = None
 
 
 class ChatResponse(BaseModel):

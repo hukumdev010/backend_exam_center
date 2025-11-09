@@ -17,6 +17,7 @@ from modules.teachers.route import router as teachers_router
 from modules.sessions.route import router as sessions_router
 from modules.users.route import router as users_router
 from modules.rbac.route import router as rbac_router
+from modules.syllabus.route import router as syllabus_router
 from settings.loader import get_settings
 
 
@@ -98,6 +99,12 @@ def include_routers(app: FastAPI) -> None:
         rbac_router,
         prefix="/api/admin",
         tags=["rbac-management"]
+    )
+    
+    # Syllabus management routes
+    app.include_router(
+        syllabus_router,
+        tags=["syllabus"]
     )
 
     # Health and system endpoints

@@ -1,14 +1,17 @@
 import os
 import uuid
 from urllib.parse import urlencode
+import hashlib
 
 import httpx
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from sessions import set_user_session
 from modules.users.service import UserService
-from .model import GoogleAuthURL
+from models import User
+from .model import GoogleAuthURL, EmailPasswordLogin, UserRegister
 
 
 class AuthService:
@@ -98,4 +101,66 @@ class AuthService:
 
         # Store in session
         set_user_session(session_token, user_data)
+        return session_token
+
+    def hash_password(self, password: str) -> str:
+        """Hash a password using SHA256"""
+        return hashlib.sha256(password.encode()).hexdigest()
+
+    def verify_password(self, password: str, password_hash: str) -> bool:
+        """Verify a password against its hash"""
+        return hashlib.sha256(password.encode()).hexdigest() == password_hash
+
+    async def authenticate_user(self, email: str, password: str, db: AsyncSession) -> User:
+        """Authenticate user with email and password"""
+        result = await db.execute(select(User).filter(User.email == email))
+        user = result.scalars().first()
+        
+        if not user or not user.password_hash:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        if not self.verify_password(password, user.password_hash):
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        return user
+
+    async def register_user(self, user_data: UserRegister, db: AsyncSession) -> User:
+        """Register a new user with email and password"""
+        # Check if user already exists
+        result = await db.execute(select(User).filter(User.email == user_data.email))
+        existing_user = result.scalars().first()
+        
+        if existing_user:
+            raise HTTPException(status_code=400, detail="User with this email already exists")
+        
+        # Create new user
+        user = User(
+            id=str(uuid.uuid4()),
+            name=user_data.name,
+            email=user_data.email,
+            password_hash=self.hash_password(user_data.password)
+        )
+        
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+        
+        return user
+
+    async def login_with_email_password(self, login_data: EmailPasswordLogin, db: AsyncSession) -> str:
+        """Login with email and password and create session"""
+        user = await self.authenticate_user(login_data.email, login_data.password, db)
+        
+        # Create session
+        session_token = str(uuid.uuid4())
+        
+        user_data = {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "image": user.image,
+        }
+        
+        set_user_session(session_token, user_data)
+        
         return session_token

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from .controller import AuthController
-from .model import GoogleAuthURL
+from .model import GoogleAuthURL, EmailPasswordLogin, UserRegister
 
 
 router = APIRouter()
@@ -68,3 +68,21 @@ async def google_callback(
 async def logout_simple():
     """Logout user (invalidate token)"""
     return await auth_controller.logout_simple()
+
+
+@router.post("/login")
+async def login_with_email_password(
+    login_data: EmailPasswordLogin,
+    db: AsyncSession = Depends(get_db)
+):
+    """Login with email and password"""
+    return await auth_controller.login_with_email_password(login_data, db)
+
+
+@router.post("/register")
+async def register_user(
+    user_data: UserRegister,
+    db: AsyncSession = Depends(get_db)
+):
+    """Register a new user with email and password"""
+    return await auth_controller.register_user(user_data, db)

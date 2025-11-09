@@ -155,6 +155,7 @@ class TeacherController:
     @staticmethod
     async def list_teachers(
         db: AsyncSession,
+        query: Optional[str] = None,
         status: Optional[TeacherStatusEnum] = None,
         is_available: Optional[bool] = None,
         category_id: Optional[int] = None,
@@ -165,7 +166,7 @@ class TeacherController:
         List teachers with filters
         """
         return await TeacherService.list_teachers(
-            db, status, is_available, category_id, skip, limit
+            db, query, status, is_available, category_id, skip, limit
         )
 
     @staticmethod

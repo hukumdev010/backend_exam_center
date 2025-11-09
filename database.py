@@ -28,7 +28,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db():
-    """Initialize database tables with settings from Secrets Manager"""
+    """Initialize database connection with settings from Secrets Manager"""
     global engine
 
     # Get settings with secrets
@@ -41,5 +41,7 @@ async def init_db():
             settings.database_url, echo=settings.debug)
         print("Database engine updated with URL from settings")
 
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Note: Database tables should be managed through Alembic migrations
+    # Commented out auto table creation to use proper migrations
+    # async with engine.begin() as conn:
+    #     await conn.run_sync(Base.metadata.create_all)
