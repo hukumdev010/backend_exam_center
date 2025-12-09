@@ -1,1 +1,0 @@
-# Business Studies certifications module

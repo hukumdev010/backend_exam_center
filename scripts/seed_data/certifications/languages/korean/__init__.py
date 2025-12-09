@@ -1,1 +1,0 @@
-# Korean language certifications module

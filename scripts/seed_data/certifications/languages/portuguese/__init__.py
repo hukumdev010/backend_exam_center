@@ -1,1 +1,0 @@
-# Portuguese language certifications module

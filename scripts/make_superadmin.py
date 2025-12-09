@@ -4,12 +4,8 @@ Simple script to assign super admin role to basnethukum789@gmail.com
 """
 
 import asyncio
-import os
 import sys
 from sqlalchemy import select
-
-# Add parent directory to path to import our modules
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from database import AsyncSessionLocal
 from models import User, Role

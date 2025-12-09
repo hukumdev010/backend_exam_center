@@ -1,1 +1,0 @@
-# Chemistry certifications module

@@ -3,7 +3,6 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from settings.loader import get_settings, get_settings_sync
-from models import Base  # Import Base from your models module
 
 # For synchronous contexts, use basic settings
 _sync_settings = get_settings_sync()

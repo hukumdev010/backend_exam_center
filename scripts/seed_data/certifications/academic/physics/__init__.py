@@ -1,1 +1,0 @@
-# Physics certifications init

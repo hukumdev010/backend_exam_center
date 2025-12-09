@@ -8,10 +8,12 @@ import os
 import asyncio
 import subprocess
 
+
 # Check if virtual environment is activated
 def is_venv_activated():
     """Check if a virtual environment is currently activated."""
     return hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
+
 
 def activate_venv():
     """Activate the virtual environment if it exists."""

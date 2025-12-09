@@ -6,11 +6,6 @@ It should be run after the database migration to set up the initial RBAC configu
 """
 import asyncio
 import sys
-import os
-
-# Add the backend directory to Python path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import AsyncSessionLocal

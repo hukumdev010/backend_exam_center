@@ -1,1 +1,0 @@
-# Environmental Science certifications module

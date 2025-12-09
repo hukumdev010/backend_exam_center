@@ -1,1 +1,0 @@
-# Chinese language certifications module
