@@ -4,6 +4,7 @@ from .python_pcep import CERTIFICATION as PYTHON_PCEP_CERT
 from .python_pcap import CERTIFICATION as PYTHON_PCAP_CERT
 from .python_pcpp1 import CERTIFICATION as PYTHON_PCPP1_CERT
 from .python_pcpp2 import CERTIFICATION as PYTHON_PCPP2_CERT
+from .python_for_data import CERTIFICATION as PYTHON_FOR_DATA_CERT
 from .oracle_java_se11_programmer_1 import CERTIFICATION as JAVA_PROG_1_CERT
 from .oracle_java_se11_programmer_2 import CERTIFICATION as JAVA_PROG_2_CERT
 from .javascript_developer import CERTIFICATION as JAVASCRIPT_CERT
@@ -33,6 +34,7 @@ CERTIFICATIONS = [
     PYTHON_PCAP_CERT,
     PYTHON_PCPP1_CERT,
     PYTHON_PCPP2_CERT,
+    PYTHON_FOR_DATA_CERT,
     JAVASCRIPT_FUNDAMENTALS_CERT,
     JAVASCRIPT_ASSOCIATE_CERT,
     JAVASCRIPT_PROFESSIONAL_CERT,

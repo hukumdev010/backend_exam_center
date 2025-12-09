@@ -13,24 +13,8 @@ CERTIFICATION = {
 
 QUESTIONS = [
     {
-        "text": """What is the output of the following code?
-
-```python
-class Meta(type):
-    def __new__(cls, name, bases, attrs):
-        attrs['class_name'] = name
-        return super().__new__(cls, name, bases, attrs)
-
-class Person(metaclass=Meta):
-    def __init__(self, name):
-        self.name = name
-
-p = Person("Alice")
-print(p.class_name)
-```""",
-        "explanation": """Metaclasses control class creation. 
-The Meta metaclass adds a 'class_name' attribute to any class 
-that uses it. The output is 'Person'.""",
+        "text": "What is the output of the following metaclass code?\n\n```python\nclass Meta(type):\n    def __new__(cls, name, bases, attrs):\n        attrs['class_name'] = name\n        return super().__new__(cls, name, bases, attrs)\n\nclass Person(metaclass=Meta):\n    def __init__(self, name):\n        self.name = name\n\np = Person(\"Alice\")\nprint(p.class_name)\n```",
+        "explanation": "Metaclasses control how classes are created. When Python creates the Person class, Meta.__new__ is called and adds 'class_name' attribute with the class name 'Person'. This attribute becomes available on all instances.",
         "reference": "https://docs.python.org/3/reference/datamodel.html",
         "points": 1,
         "answers": [
@@ -41,9 +25,8 @@ that uses it. The output is 'Person'.""",
         ],
     },
     {
-        "text": """What is the purpose of the __exit__ method in context managers?""",
-        "explanation": """The __exit__ method handles cleanup and resource 
-management when exiting a context. It's called even if exceptions occur.""",
+        "text": "What is the purpose of the __exit__ method in context managers?",
+        "explanation": "The __exit__ method is called when exiting a context manager block. It handles cleanup operations and can inspect exceptions. It's guaranteed to run even if an exception occurs in the with block.",
         "reference": "https://docs.python.org/3/reference/datamodel.html",
         "points": 1,
         "answers": [
@@ -54,67 +37,32 @@ management when exiting a context. It's called even if exceptions occur.""",
         ],
     },
     {
-        "text": """What is the output of this decorator code?
-
-```python
-def repeat(times):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            for i in range(times):
-                result = func(*args, **kwargs)
-            return result
-        return wrapper
-    return decorator
-
-@repeat(3)
-def greet(name):
-    print(f"Hello, {name}!")
-    return f"Greeted {name}"
-
-result = greet("Alice")
-print(result)
-```""",
-        "explanation": """This parameterized decorator executes the function 
-3 times but only returns the last result. It prints 3 greetings.""",
+        "text": "What is the output of this decorator code?\n\n```python\ndef repeat(times):\n    def decorator(func):\n        def wrapper(*args, **kwargs):\n            for i in range(times):\n                result = func(*args, **kwargs)\n            return result\n        return wrapper\n    return decorator\n\n@repeat(3)\ndef greet(name):\n    print(f\"Hello, {name}!\")\n    return f\"Greeted {name}\"\n\nresult = greet(\"Alice\")\nprint(result)\n```",
+        "explanation": "This is a parameterized decorator that repeats function execution 3 times. The function prints 'Hello, Alice!' three times and returns 'Greeted Alice' from the last execution.",
         "reference": "https://docs.python.org/3/tutorial/classes.html",
         "points": 1,
         "answers": [
-            {"text": "Hello, Alice!\nGreeted Alice", "is_correct": False},
-            {"text": "Hello, Alice!\nHello, Alice!\nHello, Alice!\n"
-                     "Greeted Alice", "is_correct": True},
+            {"text": "Hello, Alice!\\nGreeted Alice", "is_correct": False},
+            {"text": "Hello, Alice!\\nHello, Alice!\\nHello, Alice!\\nGreeted Alice", "is_correct": True},
             {"text": "Greeted Alice", "is_correct": False},
             {"text": "Hello, Alice!", "is_correct": False},
         ],
     },
     {
-        "text": """What is the difference between generator expressions and list comprehensions?""",
-        "explanation": """Generator expressions use lazy evaluation and 
-consume less memory, while list comprehensions create complete lists 
-in memory immediately.""",
+        "text": "What is the difference between generator expressions and list comprehensions?",
+        "explanation": "Generator expressions use lazy evaluation and create iterator objects that yield values on-demand, using minimal memory. List comprehensions create complete lists in memory immediately, using more memory but allowing random access.",
         "reference": "https://docs.python.org/3/tutorial/classes.html",
         "points": 1,
         "answers": [
             {"text": "No difference, just syntax", "is_correct": False},
             {"text": "Generators are faster in all cases", "is_correct": False},
-            {"text": "Generators use lazy evaluation and less memory", 
-             "is_correct": True},
+            {"text": "Generators use lazy evaluation and less memory", "is_correct": True},
             {"text": "List comprehensions return iterators", "is_correct": False},
         ],
     },
     {
-        "text": """What is the output of this function parameter code?
-
-```python
-def func(a, b, /, c, d, *, e, f):
-    return f"{a}-{b}-{c}-{d}-{e}-{f}"
-
-result = func(1, 2, c=3, d=4, e=5, f=6)
-print(result)
-```""",
-        "explanation": """This demonstrates Python 3.8+ parameter types:
-- a, b are positional-only (/)
-- c, d can be positional or keyword
-- e, f are keyword-only (*)""",
+        "text": "What is the output of this function parameter code?\n\n```python\ndef func(a, b, /, c, d, *, e, f):\n    return f\"{a}-{b}-{c}-{d}-{e}-{f}\"\n\nresult = func(1, 2, c=3, d=4, e=5, f=6)\nprint(result)\n```",
+        "explanation": "Python 3.8+ function parameters: a,b are positional-only (before /), c,d can be positional or keyword, e,f are keyword-only (after *). The function returns a formatted string of all parameters.",
         "reference": "https://docs.python.org/3/tutorial/controlflow.html",
         "points": 1,
         "answers": [
@@ -125,9 +73,8 @@ print(result)
         ],
     },
     {
-        "text": """What is the time complexity of accessing an element in a Python dictionary?""",
-        "explanation": """Python dictionaries use hash tables, providing 
-O(1) average case access time through direct hash lookup.""",
+        "text": "What is the time complexity of accessing an element in a Python dictionary?",
+        "explanation": "Python dictionaries use hash tables, providing O(1) average case access time through direct hash lookup.",
         "reference": "https://docs.python.org/3/tutorial/datastructures.html",
         "points": 1,
         "answers": [
@@ -138,47 +85,20 @@ O(1) average case access time through direct hash lookup.""",
         ],
     },
     {
-        "text": """What happens when you use __slots__ in a Python class?""",
-        "explanation": """__slots__ restricts instance attributes to only 
-those specified and reduces memory usage by eliminating __dict__.""",
+        "text": "What happens when you use __slots__ in a Python class?",
+        "explanation": "__slots__ restricts instance attributes to only those specified and reduces memory usage by eliminating __dict__.",
         "reference": "https://docs.python.org/3/reference/datamodel.html",
         "points": 1,
         "answers": [
             {"text": "Increases memory usage", "is_correct": False},
-            {"text": "Restricts attributes and reduces memory usage", 
-             "is_correct": True},
+            {"text": "Restricts attributes and reduces memory usage", "is_correct": True},
             {"text": "Only affects method calls", "is_correct": False},
             {"text": "Enables multiple inheritance", "is_correct": False},
         ],
     },
     {
-        "text": """What is the output of this iterator code?
-
-```python
-class Counter:
-    def __init__(self, start, end):
-        self.start = start
-        self.end = end
-    
-    def __iter__(self):
-        return self
-    
-    def __next__(self):
-        if self.start >= self.end:
-            raise StopIteration
-        self.start += 1
-        return self.start - 1
-
-counter = Counter(1, 4)
-for i in counter:
-    print(i, end=" ")
-print("\\nSecond iteration:")
-for i in counter:
-    print(i, end=" ")
-```""",
-        "explanation": """After the first iteration, the iterator's state 
-is exhausted (start=4). The second iteration finds start >= end 
-immediately and yields nothing.""",
+        "text": "What is the output of this iterator code?\n\n```python\nclass Counter:\n    def __init__(self, start, end):\n        self.start = start\n        self.end = end\n    \n    def __iter__(self):\n        return self\n    \n    def __next__(self):\n        if self.start >= self.end:\n            raise StopIteration\n        self.start += 1\n        return self.start - 1\n\ncounter = Counter(1, 4)\nfor i in counter:\n    print(i, end=\" \")\nprint(\"\\nSecond iteration:\")\nfor i in counter:\n    print(i, end=\" \")\n```",
+        "explanation": "Iterators maintain state and can be exhausted. The first loop outputs 1 2 3 and exhausts the iterator (start becomes 4). The second loop finds start >= end immediately, so nothing is printed.",
         "reference": "https://docs.python.org/3/tutorial/classes.html",
         "points": 1,
         "answers": [
@@ -189,10 +109,8 @@ immediately and yields nothing.""",
         ],
     },
     {
-        "text": """What is the purpose of the descriptor protocol in Python?""",
-        "explanation": """Descriptors customize attribute access behavior 
-through __get__, __set__, and __delete__ methods. Used by properties, 
-methods, and static/class methods.""",
+        "text": "What is the purpose of the descriptor protocol in Python?",
+        "explanation": "Descriptors customize attribute access behavior through __get__, __set__, and __delete__ methods. Used by properties, methods, and static/class methods.",
         "reference": "https://docs.python.org/3/howto/descriptor.html",
         "points": 1,
         "answers": [
@@ -203,43 +121,20 @@ methods, and static/class methods.""",
         ],
     },
     {
-        "text": """What is the difference between asyncio.gather() and asyncio.wait()?""",
-        "explanation": """gather() preserves order and returns results, 
-while wait() returns (done, pending) sets with more control options 
-over completion behavior.""",
+        "text": "What is the difference between asyncio.gather() and asyncio.wait()?",
+        "explanation": "gather() preserves order and returns results, while wait() returns (done, pending) sets with more control options over completion behavior.",
         "reference": "https://docs.python.org/3/library/asyncio-task.html",
         "points": 1,
         "answers": [
             {"text": "No difference, just aliases", "is_correct": False},
-            {"text": "gather() preserves order, wait() gives more control", 
-             "is_correct": True},
+            {"text": "gather() preserves order, wait() gives more control", "is_correct": True},
             {"text": "wait() is faster than gather()", "is_correct": False},
             {"text": "gather() only works with coroutines", "is_correct": False},
         ],
     },
     {
-        "text": """What is the output of this property code?
-
-```python
-class Circle:
-    def __init__(self, radius):
-        self._radius = radius
-    
-    @property
-    def area(self):
-        return 3.14159 * self._radius ** 2
-    
-    @area.setter
-    def area(self, value):
-        self._radius = (value / 3.14159) ** 0.5
-
-c = Circle(5)
-print(f"{c.area:.2f}")
-c.area = 50
-print(f"{c._radius:.2f}")
-```""",
-        "explanation": """Properties allow computed attributes. The getter 
-calculates area from radius. The setter calculates radius from area.""",
+        "text": "What is the output of this property code?\n\n```python\nclass Circle:\n    def __init__(self, radius):\n        self._radius = radius\n    \n    @property\n    def area(self):\n        return 3.14159 * self._radius ** 2\n    \n    @area.setter\n    def area(self, value):\n        self._radius = (value / 3.14159) ** 0.5\n\nc = Circle(5)\nprint(f\"{c.area:.2f}\")\nc.area = 50\nprint(f\"{c._radius:.2f}\")\n```",
+        "explanation": "Properties allow computed attributes. First line calculates area = 3.14159 * 25 = 78.54. Setting area to 50 calculates new radius = sqrt(50/3.14159) = 3.99.",
         "reference": "https://docs.python.org/3/library/functions.html#property",
         "points": 1,
         "answers": [
@@ -250,10 +145,8 @@ calculates area from radius. The setter calculates radius from area.""",
         ],
     },
     {
-        "text": """What is method resolution order (MRO) in Python?""",
-        "explanation": """MRO determines the order in which base classes 
-are searched when executing a method. Python uses C3 linearization 
-algorithm for MRO.""",
+        "text": "What is method resolution order (MRO) in Python?",
+        "explanation": "MRO determines the order in which base classes are searched when executing a method. Python uses C3 linearization algorithm for MRO.",
         "reference": "https://docs.python.org/3/tutorial/classes.html",
         "points": 1,
         "answers": [
@@ -264,56 +157,44 @@ algorithm for MRO.""",
         ],
     },
     {
-        "text": """What is the purpose of __new__ vs __init__ in Python classes?""",
-        "explanation": """__new__ creates and returns the instance object, 
-while __init__ initializes the already created instance. __new__ is 
-called first.""",
+        "text": "What is the purpose of __new__ vs __init__ in Python classes?",
+        "explanation": "__new__ creates and returns the instance object, while __init__ initializes the already created instance. __new__ is called first.",
         "reference": "https://docs.python.org/3/reference/datamodel.html",
         "points": 1,
         "answers": [
             {"text": "__new__ initializes, __init__ creates", "is_correct": False},
-            {"text": "__new__ creates instance, __init__ initializes it", 
-             "is_correct": True},
+            {"text": "__new__ creates instance, __init__ initializes it", "is_correct": True},
             {"text": "They do the same thing", "is_correct": False},
             {"text": "__init__ is called first", "is_correct": False},
         ],
     },
     {
-        "text": """What is a closure in Python?""",
-        "explanation": """A closure is a function that captures and retains 
-access to variables from its enclosing scope, even after the outer 
-function returns.""",
+        "text": "What is a closure in Python?",
+        "explanation": "A closure is a function that captures and retains access to variables from its enclosing scope, even after the outer function returns.",
         "reference": "https://docs.python.org/3/tutorial/classes.html",
         "points": 1,
         "answers": [
             {"text": "A function inside another function", "is_correct": False},
-            {"text": "A function that captures outer scope variables", 
-             "is_correct": True},
+            {"text": "A function that captures outer scope variables", "is_correct": True},
             {"text": "A recursive function", "is_correct": False},
             {"text": "A function with no parameters", "is_correct": False},
         ],
     },
     {
-        "text": """What is the difference between @staticmethod and @classmethod?""",
-        "explanation": """@staticmethod doesn't receive any automatic 
-arguments. @classmethod receives the class as first argument (cls). 
-Both don't require instances.""",
+        "text": "What is the difference between @staticmethod and @classmethod?",
+        "explanation": "@staticmethod doesn't receive any automatic arguments. @classmethod receives the class as first argument (cls). Both don't require instances.",
         "reference": "https://docs.python.org/3/library/functions.html",
         "points": 1,
         "answers": [
             {"text": "No difference", "is_correct": False},
-            {"text": "staticmethod has no automatic args, classmethod gets cls", 
-             "is_correct": True},
-            {"text": "staticmethod gets cls, classmethod gets self", 
-             "is_correct": False},
+            {"text": "staticmethod has no automatic args, classmethod gets cls", "is_correct": True},
+            {"text": "staticmethod gets cls, classmethod gets self", "is_correct": False},
             {"text": "Only staticmethod can be inherited", "is_correct": False},
         ],
     },
     {
-        "text": """What is the Global Interpreter Lock (GIL) in Python?""",
-        "explanation": """The GIL is a mutex that prevents multiple native 
-threads from executing Python bytecode simultaneously, limiting 
-true parallelism in CPU-bound tasks.""",
+        "text": "What is the Global Interpreter Lock (GIL) in Python?",
+        "explanation": "The GIL is a mutex that prevents multiple native threads from executing Python bytecode simultaneously, limiting true parallelism in CPU-bound tasks.",
         "reference": "https://docs.python.org/3/glossary.html#term-GIL",
         "points": 1,
         "answers": [
@@ -324,39 +205,32 @@ true parallelism in CPU-bound tasks.""",
         ],
     },
     {
-        "text": """What is the difference between shallow copy and deep copy?""",
-        "explanation": """Shallow copy creates a new object but inserts 
-references to objects in the original. Deep copy creates new objects 
-recursively.""",
+        "text": "What is the difference between shallow copy and deep copy?",
+        "explanation": "Shallow copy creates a new object but inserts references to objects in the original. Deep copy creates new objects recursively.",
         "reference": "https://docs.python.org/3/library/copy.html",
         "points": 1,
         "answers": [
             {"text": "No difference", "is_correct": False},
-            {"text": "Shallow copies references, deep copies recursively", 
-             "is_correct": True},
+            {"text": "Shallow copies references, deep copies recursively", "is_correct": True},
             {"text": "Deep copy is faster", "is_correct": False},
             {"text": "Shallow copy creates new nested objects", "is_correct": False},
         ],
     },
     {
-        "text": """What is monkey patching in Python?""",
-        "explanation": """Monkey patching is dynamically modifying a class 
-or module at runtime by adding, modifying, or deleting attributes 
-or methods.""",
+        "text": "What is monkey patching in Python?",
+        "explanation": "Monkey patching is dynamically modifying a class or module at runtime by adding, modifying, or deleting attributes or methods.",
         "reference": "https://docs.python.org/3/tutorial/classes.html",
         "points": 1,
         "answers": [
             {"text": "A testing technique", "is_correct": False},
-            {"text": "Dynamically modifying classes/modules at runtime", 
-             "is_correct": True},
+            {"text": "Dynamically modifying classes/modules at runtime", "is_correct": True},
             {"text": "A debugging method", "is_correct": False},
             {"text": "Error handling mechanism", "is_correct": False},
         ],
     },
     {
-        "text": """What is the purpose of __call__ method in Python classes?""",
-        "explanation": """__call__ makes instances of a class callable 
-like functions. When you call obj(), Python calls obj.__call__().""",
+        "text": "What is the purpose of __call__ method in Python classes?",
+        "explanation": "__call__ makes instances of a class callable like functions. When you call obj(), Python calls obj.__call__().",
         "reference": "https://docs.python.org/3/reference/datamodel.html",
         "points": 1,
         "answers": [
@@ -367,16 +241,13 @@ like functions. When you call obj(), Python calls obj.__call__().""",
         ],
     },
     {
-        "text": """What is the difference between *args and **kwargs?""",
-        "explanation": """*args collects extra positional arguments into 
-a tuple. **kwargs collects extra keyword arguments into a dictionary.""",
+        "text": "What is the difference between *args and **kwargs?",
+        "explanation": "*args collects extra positional arguments into a tuple. **kwargs collects extra keyword arguments into a dictionary.",
         "reference": "https://docs.python.org/3/tutorial/controlflow.html",
         "points": 1,
         "answers": [
-            {"text": "*args for keywords, **kwargs for positional", 
-             "is_correct": False},
-            {"text": "*args for positional, **kwargs for keywords", 
-             "is_correct": True},
+            {"text": "*args for keywords, **kwargs for positional", "is_correct": False},
+            {"text": "*args for positional, **kwargs for keywords", "is_correct": True},
             {"text": "They do the same thing", "is_correct": False},
             {"text": "**kwargs is for classes only", "is_correct": False},
         ],

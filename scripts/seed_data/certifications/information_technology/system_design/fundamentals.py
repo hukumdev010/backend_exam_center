@@ -1,7 +1,5 @@
 """System Design Interview Preparation"""
-from seed_data.certifications.information_technology.system_design.syllabus.fundamentals.content import (
-    SYLLABUS_JSON,
-)
+from scripts.syllabus.syllabus.fundamentals.content import SYLLABUS_JSON
 
 CERTIFICATION = {
     "name": "System Design Interview - Fundamentals",

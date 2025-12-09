@@ -6,23 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from database import init_db
 from routes import include_routers
-from settings.loader import get_settings
-
 # Load environment variables initially
 load_dotenv()
-
-
-async def get_cors_origins():
-    settings = await get_settings()
-    default_origins = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://eduneps.com",
-        "https://www.eduneps.com",
-    ]
-    if settings.frontend_url not in default_origins:
-        default_origins.append(settings.frontend_url)
-    return default_origins
 
 
 @asynccontextmanager
@@ -33,6 +18,7 @@ async def lifespan(app: FastAPI):
     # Shutdown - SQLAlchemy handles cleanup automatically
 
 
+
 app = FastAPI(
     title="Exam Center API",
     description="FastAPI backend for exam center application",
@@ -40,22 +26,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware - configured with comprehensive origins
+# CORS middleware - allow all origins for development with ngrok
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://eduneps.com",
-        "https://www.eduneps.com",
-        "http://localhost:3001",  # Additional frontend port
-        "http://127.0.0.1:3001",
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,  # Must be False when allow_origins=["*"]
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
-    # Allow all eduneps subdomains
-    allow_origin_regex=r"https://.*\.eduneps\.com",
 )
 
 # Include routers

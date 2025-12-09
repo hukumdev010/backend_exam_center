@@ -32,6 +32,11 @@ TEST_TEACHERS = [
                 "category_slug": "system-design",
                 "certification_slug": "system-design-fundamentals",
                 "score_percentage": 92.0,
+            },
+            {
+                "category_slug": "frontend",
+                "certification_slug": "frontend-react-fundamentals",
+                "score_percentage": 90.0,
             }
         ]
     },
