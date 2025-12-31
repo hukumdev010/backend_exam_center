@@ -82,10 +82,16 @@ class AuthController:
         # In a real app, you'd invalidate the session/token
         return {"message": "Logged out successfully"}
 
-    async def login_with_email_password(self, login_data: EmailPasswordLogin, db: AsyncSession):
+    async def login_with_email_password(
+            self,
+            login_data: EmailPasswordLogin,
+            db: AsyncSession
+         ):
         """Login with email and password"""
         try:
-            session_token = await self.auth_service.login_with_email_password(login_data, db)
+            session_token = await self.auth_service.login_with_email_password(
+                login_data, db
+            )
             user_data = get_user_session(session_token)
             
             return LoginResponse(
@@ -107,7 +113,10 @@ class AuthController:
             
             # Create a session for the newly registered user
             session_token = await self.auth_service.login_with_email_password(
-                EmailPasswordLogin(email=user_data.email, password=user_data.password),
+                EmailPasswordLogin(
+                    email=user_data.email,
+                    password=user_data.password
+                ),
                 db
             )
             

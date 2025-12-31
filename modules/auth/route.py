@@ -74,7 +74,9 @@ async def google_callback(
     
     # If it's a successful response, set cookies before redirecting
     # Check if it's a RedirectResponse
-    if hasattr(callback_response, 'url') and 'token=' in str(callback_response.url):
+    if hasattr(callback_response, 'url') and 'token=' in str(
+        callback_response.url
+         ):
         # Extract token from redirect URL
         import re
         match = re.search(r'token=([^&]+)', str(callback_response.url))
@@ -106,7 +108,10 @@ async def login_with_email_password(
     response: Response = None
 ):
     """Login with email and password"""
-    login_response = await auth_controller.login_with_email_password(login_data, db)
+    login_response = await auth_controller.login_with_email_password(
+        login_data,
+        db
+        )
     
     # Set auth token as HTTP cookie
     if response:

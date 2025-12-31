@@ -19,7 +19,6 @@ async def lifespan(app: FastAPI):
     # Shutdown - SQLAlchemy handles cleanup automatically
 
 
-
 app = FastAPI(
     title="Exam Center API",
     description="FastAPI backend for exam center application",
