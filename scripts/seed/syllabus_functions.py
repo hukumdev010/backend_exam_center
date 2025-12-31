@@ -9,6 +9,7 @@ from modules.syllabus.service import SyllabusService
 from models import Certification, SyllabusModule
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+from .frontend_topic_mapping import MODULE1_TOPICS, MODULE2_TOPICS, MODULE3_TOPICS, TOPIC_MAPPING
 
 
 async def create_frontend_react_syllabus(session, certification_map):
@@ -242,35 +243,43 @@ async def populate_frontend_detailed_content(session):
                 )
                 
                 modules_dict = {}
-                module_names = [
-                    "what_is_web_development",
-                    "frontend_vs_backend_vs_fullstack"
-                ]
                 
-                for module_name in module_names:
-                    module_file = os.path.join(
-                        topics_path, f"{module_name}.py"
+                # Load Module 1 topics
+                module1_path = os.path.join(topics_path, "module1")
+                for topic_name in MODULE1_TOPICS:
+                    topic_file = os.path.join(
+                        module1_path, f"{topic_name}.py"
                     )
-                    if os.path.exists(module_file):
+                    if os.path.exists(topic_file):
                         spec = spec_from_file_location(
-                            module_name, module_file
+                            topic_name, topic_file
                         )
                         if spec and spec.loader:
                             module = module_from_spec(spec)
                             spec.loader.exec_module(module)
-                            modules_dict[module_name] = module
+                            modules_dict[topic_name] = module
+                
+                # Load Module 2 topics
+                module2_path = os.path.join(topics_path, "module2")
+                for topic_name in MODULE2_TOPICS:
+                    topic_file = os.path.join(
+                        module2_path, f"{topic_name}.py"
+                    )
+                    if os.path.exists(topic_file):
+                        spec = spec_from_file_location(
+                            topic_name, topic_file
+                        )
+                        if spec and spec.loader:
+                            module = module_from_spec(spec)
+                            spec.loader.exec_module(module)
+                            modules_dict[topic_name] = module
                 
                 content_map = {}
-                if "what_is_web_development" in modules_dict:
-                    mod_dict = modules_dict["what_is_web_development"]
-                    content_map["What is Web Development"] = (
-                        mod_dict.TOPIC_CONTENT
-                    )
-                if "frontend_vs_backend_vs_fullstack" in modules_dict:
-                    mod_dict = modules_dict["frontend_vs_backend_vs_fullstack"]
-                    content_map["Frontend vs Backend vs Fullstack"] = (
-                        mod_dict.TOPIC_CONTENT
-                    )
+                
+                for module_name, topic_title in TOPIC_MAPPING.items():
+                    if module_name in modules_dict:
+                        mod_dict = modules_dict[module_name]
+                        content_map[topic_title] = mod_dict.TOPIC_CONTENT
                 
                 # Get frontend react fundamentals certification
                 stmt = select(Certification).options(
