@@ -101,16 +101,24 @@ class AuthController:
             raise HTTPException(status_code=401, detail=str(e))
 
     async def register_user(self, user_data: UserRegister, db: AsyncSession):
-        """Register a new user"""
+        """Register a new user and create session"""
         try:
             user = await self.auth_service.register_user(user_data, db)
             
+            # Create a session for the newly registered user
+            session_token = await self.auth_service.login_with_email_password(
+                EmailPasswordLogin(email=user_data.email, password=user_data.password),
+                db
+            )
+            
             return {
                 "message": "User registered successfully",
+                "access_token": session_token,
                 "user": {
                     "id": user.id,
                     "name": user.name,
-                    "email": user.email
+                    "email": user.email,
+                    "image": user.image if hasattr(user, 'image') else None
                 }
             }
         except Exception as e:
