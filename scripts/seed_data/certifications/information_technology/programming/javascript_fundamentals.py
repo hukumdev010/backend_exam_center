@@ -5,8 +5,8 @@ CERTIFICATION = {
     "description": "JavaScript Certified Entry-level Developer",
     "slug": "javascript-fundamentals",
     "level": "Entry",
-    "duration": 45,
-    "questions_count": 40,
+    "duration": 20,
+    "questions_count": 30,
     "category_slug": "programming",
     "is_active": True,
 }
@@ -1302,6 +1302,1598 @@ console.log([] === false);    // false
             {"text": "=== is stricter and doesn't perform type coercion", "is_correct": True},
             {"text": "== is stricter", "is_correct": False},
             {"text": "They work only with numbers", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is the correct way to create an object in JavaScript?",
+        "explanation": """# Creating Objects in JavaScript
+
+**Objects** in JavaScript can be created using object literals, constructors, or classes.
+
+## Object Creation Methods:
+
+### 1. Object Literal (Most Common)
+```javascript
+let person = {
+    name: "Alice",
+    age: 25,
+    city: "New York"
+};
+
+console.log(person.name);  // Alice
+console.log(person["age"]); // 25
+```
+
+### 2. Object Constructor
+```javascript
+let car = new Object();
+car.brand = "Toyota";
+car.model = "Camry";
+car.year = 2023;
+
+console.log(car);  // {brand: "Toyota", model: "Camry", year: 2023}
+```
+
+### 3. Constructor Function
+```javascript
+function Student(name, grade) {
+    this.name = name;
+    this.grade = grade;
+}
+
+let student1 = new Student("Bob", "A");
+console.log(student1.name);  // Bob
+```
+
+### 4. ES6 Class Syntax
+```javascript
+class Person {
+    constructor(name, age) {
+        this.name = name;
+        this.age = age;
+    }
+    
+    greet() {
+        return `Hello, I'm ${this.name}`;
+    }
+}
+
+let person = new Person("Charlie", 30);
+console.log(person.greet());  // Hello, I'm Charlie
+```
+
+### 5. Object Methods
+```javascript
+let calculator = {
+    add: function(a, b) {
+        return a + b;
+    },
+    // ES6 shorthand
+    subtract(a, b) {
+        return a - b;
+    }
+};
+
+console.log(calculator.add(5, 3));       // 8
+console.log(calculator.subtract(10, 4)); // 6
+```""",
+        "reference": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Working_with_Objects",
+        "points": 1,
+        "answers": [
+            {"text": "let obj = ()", "is_correct": False},
+            {"text": "let obj = []", "is_correct": False},
+            {"text": "let obj = {}", "is_correct": True},
+            {"text": "let obj = <>", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What does the 'this' keyword refer to in JavaScript?",
+        "explanation": """# The 'this' Keyword in JavaScript
+
+**this** refers to the context in which a function is called, typically the object that owns the method.
+
+## Context-Dependent Behavior:
+
+### 1. In Object Methods
+```javascript
+let person = {
+    name: "Alice",
+    greet: function() {
+        return `Hello, I'm ${this.name}`;
+    }
+};
+
+console.log(person.greet());  // Hello, I'm Alice
+```
+
+### 2. In Global Context
+```javascript
+console.log(this);  // Window object in browser, global in Node.js
+
+function showThis() {
+    console.log(this);
+}
+showThis();  // Window (non-strict) or undefined (strict mode)
+```
+
+### 3. In Arrow Functions
+```javascript
+let person = {
+    name: "Bob",
+    greet: () => {
+        return `Hello, I'm ${this.name}`;  // 'this' from outer scope
+    }
+};
+
+// Arrow functions don't have their own 'this'
+console.log(person.greet());  // Hello, I'm undefined
+```
+
+### 4. Constructor Functions
+```javascript
+function Car(brand) {
+    this.brand = brand;
+}
+
+let myCar = new Car("Toyota");
+console.log(myCar.brand);  // Toyota
+```
+
+### 5. Explicit Binding
+```javascript
+let person1 = {name: "Alice"};
+let person2 = {name: "Bob"};
+
+function introduce() {
+    return `I'm ${this.name}`;
+}
+
+console.log(introduce.call(person1));   // I'm Alice
+console.log(introduce.apply(person2));  // I'm Bob
+
+let boundFunc = introduce.bind(person1);
+console.log(boundFunc());  // I'm Alice
+```""",
+        "reference": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this",
+        "points": 1,
+        "answers": [
+            {"text": "The current object", "is_correct": True},
+            {"text": "The window object only", "is_correct": False},
+            {"text": "The parent function", "is_correct": False},
+            {"text": "Always undefined", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is a closure in JavaScript?",
+        "explanation": """# Closures in JavaScript
+
+A **closure** is a function that has access to variables from its outer (enclosing) scope, even after the outer function has finished executing.
+
+## How Closures Work:
+
+### 1. Basic Closure
+```javascript
+function outer() {
+    let count = 0;
+    
+    function inner() {
+        count++;
+        return count;
+    }
+    
+    return inner;
+}
+
+let counter = outer();
+console.log(counter());  // 1
+console.log(counter());  // 2
+console.log(counter());  // 3
+```
+
+### 2. Private Variables
+```javascript
+function createBankAccount(initialBalance) {
+    let balance = initialBalance;  // Private variable
+    
+    return {
+        deposit: function(amount) {
+            balance += amount;
+            return balance;
+        },
+        withdraw: function(amount) {
+            if (amount <= balance) {
+                balance -= amount;
+                return balance;
+            }
+            return "Insufficient funds";
+        },
+        getBalance: function() {
+            return balance;
+        }
+    };
+}
+
+let account = createBankAccount(100);
+console.log(account.deposit(50));     // 150
+console.log(account.withdraw(30));    // 120
+console.log(account.getBalance());    // 120
+// console.log(account.balance);      // undefined (private)
+```
+
+### 3. Loop Closure Problem
+```javascript
+// Problem: All functions share same 'i'
+for (var i = 0; i < 3; i++) {
+    setTimeout(function() {
+        console.log(i);  // 3, 3, 3
+    }, 1000);
+}
+
+// Solution 1: Use let (block scoped)
+for (let i = 0; i < 3; i++) {
+    setTimeout(function() {
+        console.log(i);  // 0, 1, 2
+    }, 1000);
+}
+
+// Solution 2: IIFE (Immediately Invoked Function Expression)
+for (var i = 0; i < 3; i++) {
+    (function(j) {
+        setTimeout(function() {
+            console.log(j);  // 0, 1, 2
+        }, 1000);
+    })(i);
+}
+```
+
+### 4. Function Factory
+```javascript
+function createMultiplier(multiplier) {
+    return function(num) {
+        return num * multiplier;
+    };
+}
+
+let double = createMultiplier(2);
+let triple = createMultiplier(3);
+
+console.log(double(5));  // 10
+console.log(triple(5));  // 15
+```""",
+        "reference": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures",
+        "points": 1,
+        "answers": [
+            {"text": "A function with access to outer scope variables", "is_correct": True},
+            {"text": "A way to close a file", "is_correct": False},
+            {"text": "A method to end a loop", "is_correct": False},
+            {"text": "A type of object", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is the purpose of the 'map()' method in JavaScript?",
+        "explanation": """# Array map() Method in JavaScript
+
+**map()** creates a new array by applying a function to each element of the original array.
+
+## map() Characteristics:
+- Returns a new array
+- Doesn't modify original array
+- Transforms each element
+
+## Examples:
+
+### 1. Basic Transformation
+```javascript
+let numbers = [1, 2, 3, 4, 5];
+let doubled = numbers.map(num => num * 2);
+console.log(doubled);  // [2, 4, 6, 8, 10]
+console.log(numbers);  // [1, 2, 3, 4, 5] (unchanged)
+```
+
+### 2. Transform Objects
+```javascript
+let users = [
+    {name: "Alice", age: 25},
+    {name: "Bob", age: 30}
+];
+
+let names = users.map(user => user.name);
+console.log(names);  // ["Alice", "Bob"]
+
+let agesInMonths = users.map(user => ({
+    name: user.name,
+    ageInMonths: user.age * 12
+}));
+console.log(agesInMonths);
+// [{name: "Alice", ageInMonths: 300}, {name: "Bob", ageInMonths: 360}]
+```
+
+### 3. With Index
+```javascript
+let fruits = ["apple", "banana", "orange"];
+let indexed = fruits.map((fruit, index) => `${index + 1}. ${fruit}`);
+console.log(indexed);  // ["1. apple", "2. banana", "3. orange"]
+```
+
+### 4. String Operations
+```javascript
+let words = ["hello", "world", "javascript"];
+let uppercase = words.map(word => word.toUpperCase());
+console.log(uppercase);  // ["HELLO", "WORLD", "JAVASCRIPT"]
+
+let lengths = words.map(word => word.length);
+console.log(lengths);  // [5, 5, 10]
+```
+
+### 5. Chaining Methods
+```javascript
+let numbers = [1, 2, 3, 4, 5];
+let result = numbers
+    .filter(num => num > 2)     // [3, 4, 5]
+    .map(num => num * 2)        // [6, 8, 10]
+    .reduce((sum, num) => sum + num, 0);  // 24
+
+console.log(result);  // 24
+```""",
+        "reference": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map",
+        "points": 1,
+        "answers": [
+            {"text": "To create a new transformed array", "is_correct": True},
+            {"text": "To find a specific element", "is_correct": False},
+            {"text": "To sort an array", "is_correct": False},
+            {"text": "To remove elements", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What does 'NaN' stand for in JavaScript?",
+        "explanation": """# NaN (Not-a-Number) in JavaScript
+
+**NaN** represents a value that is not a valid number, resulting from invalid mathematical operations.
+
+## NaN Characteristics:
+- Type is "number"
+- Not equal to itself
+- Indicates failed numeric operation
+
+## Examples:
+
+### 1. Operations Producing NaN
+```javascript
+console.log(0 / 0);              // NaN
+console.log(parseInt("hello"));  // NaN
+console.log(Math.sqrt(-1));      // NaN
+console.log("text" - 5);         // NaN
+console.log(undefined + 5);      // NaN
+```
+
+### 2. Type of NaN
+```javascript
+console.log(typeof NaN);         // "number"
+console.log(NaN === NaN);        // false (unique property!)
+console.log(NaN == NaN);         // false
+```
+
+### 3. Checking for NaN
+```javascript
+let result = 0 / 0;
+
+// Wrong way
+console.log(result === NaN);     // false (doesn't work!)
+
+// Correct ways
+console.log(Number.isNaN(result));     // true (recommended)
+console.log(isNaN(result));            // true
+
+// Difference between isNaN and Number.isNaN
+console.log(isNaN("hello"));           // true (coerces to number first)
+console.log(Number.isNaN("hello"));    // false (strict check)
+```
+
+### 4. NaN Propagation
+```javascript
+let x = NaN;
+console.log(x + 5);    // NaN
+console.log(x * 2);    // NaN
+console.log(x / 10);   // NaN
+
+// NaN spreads through calculations
+let a = parseInt("abc");
+let b = a + 10;
+let c = b * 2;
+console.log(c);  // NaN
+```
+
+### 5. Handling NaN
+```javascript
+function safeDivide(a, b) {
+    let result = a / b;
+    return Number.isNaN(result) ? 0 : result;
+}
+
+console.log(safeDivide(10, 2));   // 5
+console.log(safeDivide(0, 0));    // 0 (instead of NaN)
+
+// Parse with fallback
+let userInput = "abc";
+let age = parseInt(userInput) || 0;
+console.log(age);  // 0
+```""",
+        "reference": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/NaN",
+        "points": 1,
+        "answers": [
+            {"text": "Not a Number", "is_correct": True},
+            {"text": "Negative and Null", "is_correct": False},
+            {"text": "Null and None", "is_correct": False},
+            {"text": "New Array Number", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is the difference between 'let', 'const', and 'var'?",
+        "explanation": """# Variable Declaration Keywords in JavaScript
+
+**var** is function-scoped and hoisted, **let** is block-scoped and can be reassigned, **const** is block-scoped and cannot be reassigned.
+
+## Key Differences:
+
+### 1. Scope Differences
+```javascript
+// var: function scoped
+function testVar() {
+    if (true) {
+        var x = 10;
+    }
+    console.log(x);  // 10 (accessible outside block)
+}
+
+// let: block scoped
+function testLet() {
+    if (true) {
+        let y = 10;
+    }
+    // console.log(y);  // ReferenceError: y is not defined
+}
+
+// const: block scoped
+function testConst() {
+    if (true) {
+        const z = 10;
+    }
+    // console.log(z);  // ReferenceError: z is not defined
+}
+```
+
+### 2. Reassignment
+```javascript
+// var and let can be reassigned
+var a = 1;
+a = 2;  // OK
+
+let b = 1;
+b = 2;  // OK
+
+// const cannot be reassigned
+const c = 1;
+// c = 2;  // TypeError: Assignment to constant variable
+
+// But const objects/arrays can be mutated
+const arr = [1, 2, 3];
+arr.push(4);  // OK - modifying content
+console.log(arr);  // [1, 2, 3, 4]
+
+const obj = {name: "Alice"};
+obj.age = 25;  // OK - adding property
+console.log(obj);  // {name: "Alice", age: 25}
+```
+
+### 3. Hoisting
+```javascript
+// var is hoisted with undefined
+console.log(x);  // undefined (hoisted)
+var x = 5;
+
+// let and const are hoisted but not initialized (TDZ)
+// console.log(y);  // ReferenceError: Cannot access before initialization
+let y = 10;
+
+// console.log(z);  // ReferenceError
+const z = 15;
+```
+
+### 4. Loop Behavior
+```javascript
+// var problem in loops
+for (var i = 0; i < 3; i++) {
+    setTimeout(() => console.log(i), 100);
+}
+// Output: 3, 3, 3 (all functions share same 'i')
+
+// let solution
+for (let j = 0; j < 3; j++) {
+    setTimeout(() => console.log(j), 100);
+}
+// Output: 0, 1, 2 (each iteration has own 'j')
+```
+
+### 5. Best Practices
+```javascript
+// Use const by default
+const API_URL = "https://api.example.com";
+const MAX_RETRIES = 3;
+
+// Use let when you need to reassign
+let counter = 0;
+counter++;
+
+// Avoid var in modern JavaScript
+// var oldStyle = "avoid";  // Don't use
+
+// const for objects and arrays you'll mutate
+const users = [];
+users.push({name: "Alice"});
+
+const config = {theme: "dark"};
+config.language = "en";
+```""",
+        "reference": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let",
+        "points": 1,
+        "answers": [
+            {"text": "No difference", "is_correct": False},
+            {"text": "var is function-scoped, let and const are block-scoped", "is_correct": True},
+            {"text": "Only syntax difference", "is_correct": False},
+            {"text": "var is faster", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is an arrow function in JavaScript?",
+        "explanation": """# Arrow Functions in JavaScript
+
+**Arrow functions** are a shorter syntax for writing functions, introduced in ES6, with lexical 'this' binding.
+
+## Arrow Function Syntax:
+
+### 1. Basic Syntax
+```javascript
+// Traditional function
+function add(a, b) {
+    return a + b;
+}
+
+// Arrow function
+const add = (a, b) => {
+    return a + b;
+};
+
+// Concise arrow function (implicit return)
+const add = (a, b) => a + b;
+
+console.log(add(3, 4));  // 7
+```
+
+### 2. Different Syntaxes
+```javascript
+// No parameters
+const greet = () => "Hello!";
+
+// One parameter (parentheses optional)
+const square = x => x * x;
+const double = (x) => x * 2;
+
+// Multiple parameters
+const multiply = (a, b) => a * b;
+
+// Multiple statements (need explicit return)
+const calculate = (a, b) => {
+    let sum = a + b;
+    let product = a * b;
+    return {sum, product};
+};
+```
+
+### 3. Lexical 'this'
+```javascript
+// Traditional function has its own 'this'
+let person = {
+    name: "Alice",
+    hobbies: ["reading", "coding"],
+    showHobbies: function() {
+        this.hobbies.forEach(function(hobby) {
+            // 'this' is undefined in strict mode
+            // console.log(this.name + " likes " + hobby);
+        });
+    }
+};
+
+// Arrow function inherits 'this' from parent scope
+let person2 = {
+    name: "Bob",
+    hobbies: ["gaming", "music"],
+    showHobbies: function() {
+        this.hobbies.forEach(hobby => {
+            console.log(`${this.name} likes ${hobby}`);
+        });
+    }
+};
+
+person2.showHobbies();
+// Bob likes gaming
+// Bob likes music
+```
+
+### 4. Returning Objects
+```javascript
+// Need parentheses to return object literal
+const createPerson = (name, age) => ({name, age});
+
+console.log(createPerson("Charlie", 30));
+// {name: "Charlie", age: 30}
+
+// Without parentheses - error!
+// const bad = (name, age) => {name, age};  // Syntax error
+```
+
+### 5. Array Methods with Arrow Functions
+```javascript
+let numbers = [1, 2, 3, 4, 5];
+
+// map
+let doubled = numbers.map(n => n * 2);
+console.log(doubled);  // [2, 4, 6, 8, 10]
+
+// filter
+let evens = numbers.filter(n => n % 2 === 0);
+console.log(evens);  // [2, 4]
+
+// reduce
+let sum = numbers.reduce((acc, n) => acc + n, 0);
+console.log(sum);  // 15
+```
+
+### 6. Limitations
+```javascript
+// Cannot be used as constructors
+const Person = (name) => {
+    this.name = name;
+};
+// new Person("Alice");  // TypeError: Person is not a constructor
+
+// No arguments object
+const showArgs = () => {
+    // console.log(arguments);  // ReferenceError
+};
+
+// Use rest parameters instead
+const showArgs2 = (...args) => {
+    console.log(args);
+};
+showArgs2(1, 2, 3);  // [1, 2, 3]
+```""",
+        "reference": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions",
+        "points": 1,
+        "answers": [
+            {"text": "A shorter syntax for functions with lexical 'this'", "is_correct": True},
+            {"text": "A function that draws arrows", "is_correct": False},
+            {"text": "A pointer function", "is_correct": False},
+            {"text": "An async function", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What does the 'filter()' method do in JavaScript?",
+        "explanation": """# Array filter() Method in JavaScript
+
+**filter()** creates a new array with elements that pass a test function, returning true/false for each element.
+
+## filter() Characteristics:
+- Returns new array
+- Doesn't modify original
+- Includes elements where callback returns true
+
+## Examples:
+
+### 1. Basic Filtering
+```javascript
+let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+// Get even numbers
+let evens = numbers.filter(num => num % 2 === 0);
+console.log(evens);  // [2, 4, 6, 8, 10]
+
+// Get numbers greater than 5
+let large = numbers.filter(num => num > 5);
+console.log(large);  // [6, 7, 8, 9, 10]
+```
+
+### 2. Filter Objects
+```javascript
+let users = [
+    {name: "Alice", age: 25, active: true},
+    {name: "Bob", age: 30, active: false},
+    {name: "Charlie", age: 35, active: true},
+    {name: "Dave", age: 28, active: true}
+];
+
+// Get active users
+let activeUsers = users.filter(user => user.active);
+console.log(activeUsers);
+// [{name: "Alice", ...}, {name: "Charlie", ...}, {name: "Dave", ...}]
+
+// Get users over 30
+let over30 = users.filter(user => user.age > 30);
+console.log(over30);  // [{name: "Charlie", age: 35, active: true}]
+```
+
+### 3. Remove Falsy Values
+```javascript
+let mixed = [0, 1, false, 2, "", 3, null, undefined, 4, NaN, 5];
+
+// Remove all falsy values
+let truthy = mixed.filter(Boolean);
+console.log(truthy);  // [1, 2, 3, 4, 5]
+
+// Or explicit function
+let truthy2 = mixed.filter(item => item);
+console.log(truthy2);  // [1, 2, 3, 4, 5]
+```
+
+### 4. String Filtering
+```javascript
+let words = ["apple", "banana", "apricot", "cherry", "avocado"];
+
+// Words starting with 'a'
+let aWords = words.filter(word => word.startsWith('a'));
+console.log(aWords);  // ["apple", "apricot", "avocado"]
+
+// Words longer than 6 characters
+let longWords = words.filter(word => word.length > 6);
+console.log(longWords);  // ["apricot", "avocado"]
+```
+
+### 5. Remove Duplicates
+```javascript
+let numbers = [1, 2, 3, 2, 4, 3, 5, 1];
+
+// Keep only first occurrence
+let unique = numbers.filter((num, index, arr) => {
+    return arr.indexOf(num) === index;
+});
+console.log(unique);  // [1, 2, 3, 4, 5]
+
+// Or use Set
+let unique2 = [...new Set(numbers)];
+console.log(unique2);  // [1, 2, 3, 4, 5]
+```
+
+### 6. Complex Conditions
+```javascript
+let products = [
+    {name: "Laptop", price: 1000, inStock: true},
+    {name: "Phone", price: 500, inStock: false},
+    {name: "Tablet", price: 300, inStock: true},
+    {name: "Monitor", price: 200, inStock: true}
+];
+
+// Available products under $400
+let affordable = products.filter(p => p.price < 400 && p.inStock);
+console.log(affordable);
+// [{name: "Tablet", ...}, {name: "Monitor", ...}]
+```""",
+        "reference": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter",
+        "points": 1,
+        "answers": [
+            {"text": "Creates a new array with elements that pass a test", "is_correct": True},
+            {"text": "Sorts the array", "is_correct": False},
+            {"text": "Removes all elements", "is_correct": False},
+            {"text": "Merges two arrays", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is the purpose of 'async/await' in JavaScript?",
+        "explanation": """# Async/Await in JavaScript
+
+**async/await** provides a cleaner syntax for handling asynchronous operations, making async code look synchronous.
+
+## Async/Await Basics:
+
+### 1. Basic Syntax
+```javascript
+// Traditional Promise
+function fetchData() {
+    return fetch('https://api.example.com/data')
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error(error));
+}
+
+// With async/await
+async function fetchData() {
+    try {
+        let response = await fetch('https://api.example.com/data');
+        let data = await response.json();
+        console.log(data);
+    } catch (error) {
+        console.error(error);
+    }
+}
+```
+
+### 2. Async Functions Always Return Promise
+```javascript
+async function getName() {
+    return "Alice";  // Wrapped in Promise.resolve()
+}
+
+getName().then(name => console.log(name));  // Alice
+
+// Equivalent to:
+function getName2() {
+    return Promise.resolve("Alice");
+}
+```
+
+### 3. Await Pauses Execution
+```javascript
+async function example() {
+    console.log("Start");
+    
+    // Wait for promise to resolve
+    let result = await new Promise(resolve => {
+        setTimeout(() => resolve("Done"), 2000);
+    });
+    
+    console.log(result);  // After 2 seconds
+    console.log("End");
+}
+
+example();
+// Output:
+// Start
+// (2 second pause)
+// Done
+// End
+```
+
+### 4. Error Handling
+```javascript
+async function riskyOperation() {
+    try {
+        let data = await fetchFromAPI();
+        let processed = await processData(data);
+        return processed;
+    } catch (error) {
+        console.error("Error:", error.message);
+        return null;
+    }
+}
+
+// Alternative: catch at call site
+riskyOperation()
+    .then(result => console.log(result))
+    .catch(error => console.error(error));
+```
+
+### 5. Parallel Execution
+```javascript
+// Sequential (slow)
+async function sequential() {
+    let user = await fetchUser();        // 1 second
+    let posts = await fetchPosts();      // 1 second
+    let comments = await fetchComments(); // 1 second
+    return {user, posts, comments};      // Total: 3 seconds
+}
+
+// Parallel (fast)
+async function parallel() {
+    let [user, posts, comments] = await Promise.all([
+        fetchUser(),
+        fetchPosts(),
+        fetchComments()
+    ]);
+    return {user, posts, comments};  // Total: 1 second
+}
+```
+
+### 6. Real-World Example
+```javascript
+async function getUserData(userId) {
+    try {
+        // Fetch user
+        let userResponse = await fetch(`/api/users/${userId}`);
+        if (!userResponse.ok) {
+            throw new Error("User not found");
+        }
+        let user = await userResponse.json();
+        
+        // Fetch user's posts
+        let postsResponse = await fetch(`/api/users/${userId}/posts`);
+        let posts = await postsResponse.json();
+        
+        return {
+            user: user,
+            posts: posts,
+            postCount: posts.length
+        };
+    } catch (error) {
+        console.error("Failed to fetch user data:", error);
+        return null;
+    }
+}
+
+// Usage
+let data = await getUserData(123);
+console.log(data);
+```""",
+        "reference": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function",
+        "points": 1,
+        "answers": [
+            {"text": "To handle asynchronous operations with cleaner syntax", "is_correct": True},
+            {"text": "To make code run faster", "is_correct": False},
+            {"text": "To create loops", "is_correct": False},
+            {"text": "To define variables", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is the spread operator (...) used for in JavaScript?",
+        "explanation": """# Spread Operator in JavaScript
+
+The **spread operator (...)** expands iterables (arrays, objects, strings) into individual elements.
+
+## Spread Operator Uses:
+
+### 1. Array Spreading
+```javascript
+// Copy array
+let original = [1, 2, 3];
+let copy = [...original];
+console.log(copy);  // [1, 2, 3]
+
+// Combine arrays
+let arr1 = [1, 2, 3];
+let arr2 = [4, 5, 6];
+let combined = [...arr1, ...arr2];
+console.log(combined);  // [1, 2, 3, 4, 5, 6]
+
+// Insert in middle
+let middle = [...arr1, 10, ...arr2];
+console.log(middle);  // [1, 2, 3, 10, 4, 5, 6]
+```
+
+### 2. Object Spreading
+```javascript
+// Copy object
+let person = {name: "Alice", age: 25};
+let personCopy = {...person};
+console.log(personCopy);  // {name: "Alice", age: 25}
+
+// Merge objects
+let defaults = {theme: "light", language: "en"};
+let userSettings = {language: "es", fontSize: 14};
+let settings = {...defaults, ...userSettings};
+console.log(settings);
+// {theme: "light", language: "es", fontSize: 14}
+
+// Override properties
+let updated = {...person, age: 26, city: "NYC"};
+console.log(updated);
+// {name: "Alice", age: 26, city: "NYC"}
+```
+
+### 3. Function Arguments
+```javascript
+// Pass array elements as arguments
+function sum(a, b, c) {
+    return a + b + c;
+}
+
+let numbers = [1, 2, 3];
+console.log(sum(...numbers));  // 6
+
+// Math functions
+let scores = [85, 92, 78, 95, 88];
+console.log(Math.max(...scores));  // 95
+console.log(Math.min(...scores));  // 78
+```
+
+### 4. String to Array
+```javascript
+let text = "Hello";
+let chars = [...text];
+console.log(chars);  // ['H', 'e', 'l', 'l', 'o']
+
+// Remove duplicates
+let str = "Mississippi";
+let unique = [...new Set(str)];
+console.log(unique.join(''));  // "Misp"
+```
+
+### 5. Rest Parameters (Similar Syntax)
+```javascript
+// Collect remaining parameters
+function multiply(multiplier, ...numbers) {
+    return numbers.map(n => n * multiplier);
+}
+
+console.log(multiply(2, 1, 2, 3));  // [2, 4, 6]
+
+// Destructuring with rest
+let [first, second, ...rest] = [1, 2, 3, 4, 5];
+console.log(first);   // 1
+console.log(second);  // 2
+console.log(rest);    // [3, 4, 5]
+
+let {name, ...others} = {name: "Bob", age: 30, city: "LA"};
+console.log(name);    // "Bob"
+console.log(others);  // {age: 30, city: "LA"}
+```
+
+### 6. Practical Examples
+```javascript
+// Add item to array immutably
+let items = [1, 2, 3];
+let newItems = [...items, 4];  // Don't modify original
+
+// Remove item immutably
+let filtered = items.filter(item => item !== 2);
+let withSpread = [...items.slice(0, 1), ...items.slice(2)];
+
+// Clone nested structures (shallow)
+let nested = {
+    user: {name: "Alice"},
+    scores: [1, 2, 3]
+};
+let shallowCopy = {...nested};
+// Note: nested.scores is still referenced, not copied deep
+```""",
+        "reference": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax",
+        "points": 1,
+        "answers": [
+            {"text": "To expand iterables into individual elements", "is_correct": True},
+            {"text": "To perform division", "is_correct": False},
+            {"text": "To create comments", "is_correct": False},
+            {"text": "To declare variables", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is destructuring in JavaScript?",
+        "explanation": """# Destructuring in JavaScript
+
+**Destructuring** is a syntax for extracting values from arrays or properties from objects into distinct variables.
+
+## Destructuring Syntax:
+
+### 1. Array Destructuring
+```javascript
+// Basic array destructuring
+let [a, b, c] = [1, 2, 3];
+console.log(a);  // 1
+console.log(b);  // 2
+console.log(c);  // 3
+
+// Skip elements
+let [first, , third] = [1, 2, 3];
+console.log(first);  // 1
+console.log(third);  // 3
+
+// Rest operator
+let [head, ...tail] = [1, 2, 3, 4, 5];
+console.log(head);  // 1
+console.log(tail);  // [2, 3, 4, 5]
+```
+
+### 2. Object Destructuring
+```javascript
+// Basic object destructuring
+let person = {name: "Alice", age: 25, city: "NYC"};
+let {name, age, city} = person;
+console.log(name);  // Alice
+console.log(age);   // 25
+
+// Rename variables
+let {name: fullName, age: years} = person;
+console.log(fullName);  // Alice
+console.log(years);     // 25
+
+// Default values
+let {name, country = "USA"} = person;
+console.log(country);  // USA
+```
+
+### 3. Nested Destructuring
+```javascript
+let user = {
+    id: 1,
+    name: "Bob",
+    address: {
+        city: "Boston",
+        zip: "02101"
+    }
+};
+
+// Nested destructuring
+let {
+    name,
+    address: {city, zip}
+} = user;
+
+console.log(name);  // Bob
+console.log(city);  // Boston
+console.log(zip);   // 02101
+```
+
+### 4. Function Parameters
+```javascript
+// Destructure in function params
+function greet({name, age}) {
+    console.log(`${name} is ${age} years old`);
+}
+
+greet({name: "Charlie", age: 30});
+// Charlie is 30 years old
+
+// With defaults
+function createUser({name, role = "user", active = true}) {
+    return {name, role, active};
+}
+
+console.log(createUser({name: "Dave"}));
+// {name: "Dave", role: "user", active: true}
+```
+
+### 5. Array Return Values
+```javascript
+function getCoordinates() {
+    return [40.7128, -74.0060];
+}
+
+let [latitude, longitude] = getCoordinates();
+console.log(latitude);   // 40.7128
+console.log(longitude);  // -74.0060
+
+// Object return values
+function getUserInfo() {
+    return {
+        name: "Eve",
+        email: "eve@example.com"
+    };
+}
+
+let {name, email} = getUserInfo();
+console.log(name);   // Eve
+console.log(email);  // eve@example.com
+```
+
+### 6. Swapping Variables
+```javascript
+// Swap without temp variable
+let x = 1;
+let y = 2;
+[x, y] = [y, x];
+console.log(x);  // 2
+console.log(y);  // 1
+
+// Multiple swaps
+let [a, b, c] = [1, 2, 3];
+[a, b, c] = [c, a, b];
+console.log(a, b, c);  // 3, 1, 2
+```""",
+        "reference": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment",
+        "points": 1,
+        "answers": [
+            {"text": "Extracting values from arrays/objects into variables", "is_correct": True},
+            {"text": "Deleting properties from objects", "is_correct": False},
+            {"text": "Breaking loops", "is_correct": False},
+            {"text": "Removing array elements", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is the purpose of the 'reduce()' method in JavaScript?",
+        "explanation": """# Array reduce() Method in JavaScript
+
+**reduce()** executes a reducer function on each array element, returning a single accumulated value.
+
+## reduce() Syntax:
+```javascript
+array.reduce((accumulator, currentValue, index, array) => {
+    // return updated accumulator
+}, initialValue);
+```
+
+## Examples:
+
+### 1. Sum Array Elements
+```javascript
+let numbers = [1, 2, 3, 4, 5];
+
+let sum = numbers.reduce((acc, num) => acc + num, 0);
+console.log(sum);  // 15
+
+// Step by step:
+// acc=0, num=1 => 0+1=1
+// acc=1, num=2 => 1+2=3
+// acc=3, num=3 => 3+3=6
+// acc=6, num=4 => 6+4=10
+// acc=10, num=5 => 10+5=15
+```
+
+### 2. Find Maximum/Minimum
+```javascript
+let numbers = [5, 2, 9, 1, 7];
+
+let max = numbers.reduce((acc, num) => Math.max(acc, num));
+console.log(max);  // 9
+
+let min = numbers.reduce((acc, num) => Math.min(acc, num));
+console.log(min);  // 1
+
+// Or simpler:
+let max2 = Math.max(...numbers);  // 9
+```
+
+### 3. Count Occurrences
+```javascript
+let fruits = ["apple", "banana", "apple", "orange", "banana", "apple"];
+
+let count = fruits.reduce((acc, fruit) => {
+    acc[fruit] = (acc[fruit] || 0) + 1;
+    return acc;
+}, {});
+
+console.log(count);
+// {apple: 3, banana: 2, orange: 1}
+```
+
+### 4. Group By Property
+```javascript
+let people = [
+    {name: "Alice", age: 25},
+    {name: "Bob", age: 30},
+    {name: "Charlie", age: 25},
+    {name: "Dave", age: 30}
+];
+
+let grouped = people.reduce((acc, person) => {
+    let age = person.age;
+    if (!acc[age]) {
+        acc[age] = [];
+    }
+    acc[age].push(person);
+    return acc;
+}, {});
+
+console.log(grouped);
+// {
+//   25: [{name: "Alice", age: 25}, {name: "Charlie", age: 25}],
+//   30: [{name: "Bob", age: 30}, {name: "Dave", age: 30}]
+// }
+```
+
+### 5. Flatten Array
+```javascript
+let nested = [[1, 2], [3, 4], [5, 6]];
+
+let flattened = nested.reduce((acc, arr) => acc.concat(arr), []);
+console.log(flattened);  // [1, 2, 3, 4, 5, 6]
+
+// Or use flat()
+let flattened2 = nested.flat();  // [1, 2, 3, 4, 5, 6]
+```
+
+### 6. Create Object from Array
+```javascript
+let users = [
+    {id: 1, name: "Alice"},
+    {id: 2, name: "Bob"},
+    {id: 3, name: "Charlie"}
+];
+
+let userMap = users.reduce((acc, user) => {
+    acc[user.id] = user.name;
+    return acc;
+}, {});
+
+console.log(userMap);
+// {1: "Alice", 2: "Bob", 3: "Charlie"}
+```
+
+### 7. Pipeline/Compose Functions
+```javascript
+let numbers = [1, 2, 3, 4, 5];
+
+// Apply multiple transformations
+let result = numbers
+    .filter(n => n > 2)
+    .reduce((acc, n) => acc + (n * 2), 0);
+
+console.log(result);  // (3*2) + (4*2) + (5*2) = 24
+```""",
+        "reference": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce",
+        "points": 1,
+        "answers": [
+            {"text": "To reduce array to a single accumulated value", "is_correct": True},
+            {"text": "To remove elements from array", "is_correct": False},
+            {"text": "To sort the array", "is_correct": False},
+            {"text": "To make the array smaller", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is event delegation in JavaScript?",
+        "explanation": """# Event Delegation in JavaScript
+
+**Event delegation** is a technique where you attach a single event listener to a parent element to handle events for multiple child elements.
+
+## How Event Delegation Works:
+
+### 1. Without Event Delegation (Inefficient)
+```javascript
+// Add listener to each button
+document.querySelectorAll('.button').forEach(button => {
+    button.addEventListener('click', function() {
+        console.log('Button clicked:', this.textContent);
+    });
+});
+
+// Problem: Many event listeners, must update when DOM changes
+```
+
+### 2. With Event Delegation (Efficient)
+```javascript
+// Add single listener to parent
+document.getElementById('button-container').addEventListener('click', function(e) {
+    if (e.target.classList.contains('button')) {
+        console.log('Button clicked:', e.target.textContent);
+    }
+});
+
+// Benefits: One listener, works with dynamically added buttons
+```
+
+### 3. Event Bubbling
+```javascript
+// Events bubble up from child to parent
+<div id="parent">
+    <div id="child">
+        <button id="button">Click me</button>
+    </div>
+</div>
+
+document.getElementById('parent').addEventListener('click', function(e) {
+    console.log('Clicked element:', e.target.id);
+    console.log('Event attached to:', e.currentTarget.id);
+});
+
+// Clicking button logs:
+// Clicked element: button (e.target)
+// Event attached to: parent (e.currentTarget)
+```
+
+### 4. Practical Example - Todo List
+```javascript
+// HTML
+<ul id="todo-list">
+    <li><button class="delete">Delete</button> Task 1</li>
+    <li><button class="delete">Delete</button> Task 2</li>
+</ul>
+
+// Event delegation
+document.getElementById('todo-list').addEventListener('click', function(e) {
+    if (e.target.classList.contains('delete')) {
+        let listItem = e.target.parentElement;
+        listItem.remove();
+    }
+});
+
+// Add new todo dynamically (delegation still works!)
+function addTodo(text) {
+    let li = document.createElement('li');
+    li.innerHTML = `<button class="delete">Delete</button> ${text}`;
+    document.getElementById('todo-list').appendChild(li);
+}
+
+addTodo('Task 3');  // Delete button will work automatically
+```
+
+### 5. Table Row Example
+```javascript
+// HTML
+<table id="data-table">
+    <tr><td>Row 1</td><td><button class="edit">Edit</button></td></tr>
+    <tr><td>Row 2</td><td><button class="edit">Edit</button></td></tr>
+</table>
+
+// Delegate to table
+document.getElementById('data-table').addEventListener('click', function(e) {
+    if (e.target.classList.contains('edit')) {
+        let row = e.target.closest('tr');
+        let rowData = row.cells[0].textContent;
+        console.log('Editing:', rowData);
+    }
+});
+```
+
+### 6. Multiple Event Types
+```javascript
+let container = document.getElementById('container');
+
+// Handle different elements
+container.addEventListener('click', function(e) {
+    // Handle buttons
+    if (e.target.matches('.btn-save')) {
+        console.log('Save clicked');
+    }
+    
+    // Handle links
+    if (e.target.matches('a.nav-link')) {
+        e.preventDefault();
+        console.log('Navigation:', e.target.href);
+    }
+    
+    // Handle checkboxes
+    if (e.target.matches('input[type="checkbox"]')) {
+        console.log('Checkbox:', e.target.checked);
+    }
+});
+```
+
+### 7. Benefits
+```javascript
+// ✓ Better performance (fewer listeners)
+// ✓ Works with dynamically added elements
+// ✓ Less memory usage
+// ✓ Simpler code maintenance
+
+// When to use:
+// - Many similar elements
+// - Dynamic content
+// - Repeated patterns
+
+// When not to use:
+// - Events that don't bubble (focus, blur)
+// - Unique event handlers per element
+```""",
+        "reference": "https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#event_delegation",
+        "points": 1,
+        "answers": [
+            {"text": "Attaching a listener to parent to handle child events", "is_correct": True},
+            {"text": "Delegating tasks to other functions", "is_correct": False},
+            {"text": "Removing event listeners", "is_correct": False},
+            {"text": "Creating custom events", "is_correct": False},
+        ],
+    },
+    {
+        "text": "What is the difference between 'null' and 'undefined' in JavaScript?",
+        "explanation": """# null vs undefined in JavaScript
+
+**undefined** means a variable has been declared but not assigned a value, while **null** is an intentional absence of value.
+
+## Key Differences:
+
+### 1. Basic Definitions
+```javascript
+// undefined: variable declared but not assigned
+let x;
+console.log(x);  // undefined
+console.log(typeof x);  // "undefined"
+
+// null: intentional absence of value
+let y = null;
+console.log(y);  // null
+console.log(typeof y);  // "object" (known JavaScript quirk!)
+```
+
+### 2. Default Values
+```javascript
+// Function parameters default to undefined
+function greet(name) {
+    console.log(name);
+}
+greet();  // undefined
+
+// Object properties that don't exist
+let person = {name: "Alice"};
+console.log(person.age);  // undefined
+
+// Array elements not yet assigned
+let arr = new Array(3);
+console.log(arr[0]);  // undefined
+```
+
+### 3. Intentional Assignment
+```javascript
+// undefined - variable exists but no value
+let notAssigned;
+console.log(notAssigned);  // undefined
+
+// null - explicitly set to no value
+let intentionallyEmpty = null;
+console.log(intentionallyEmpty);  // null
+
+// Use case: reset a value
+let user = {name: "Bob"};
+user = null;  // Clear the reference
+```
+
+### 4. Type Checking
+```javascript
+let a;
+let b = null;
+
+console.log(typeof a);  // "undefined"
+console.log(typeof b);  // "object" (quirk!)
+
+// Proper null check
+console.log(b === null);  // true
+
+// Check for both
+console.log(a == null);   // true (loose equality)
+console.log(b == null);   // true
+console.log(a === null);  // false (strict equality)
+console.log(b === undefined);  // false
+```
+
+### 5. Comparisons
+```javascript
+console.log(null == undefined);   // true (loose equality)
+console.log(null === undefined);  // false (strict equality)
+
+console.log(null == 0);   // false
+console.log(null == "");  // false
+console.log(null == false);  // false
+
+console.log(undefined == 0);   // false
+console.log(undefined == "");  // false
+console.log(undefined == false);  // false
+```
+
+### 6. Practical Usage
+```javascript
+// Function returns undefined if nothing returned
+function doNothing() {
+    // no return statement
+}
+console.log(doNothing());  // undefined
+
+// Use null to reset object references
+let config = {theme: "dark"};
+config = null;  // Clear config
+
+// Check if variable was assigned
+function process(value) {
+    if (value === undefined) {
+        console.log("No value provided");
+    }
+}
+
+// Optional chaining with undefined
+let user = {name: "Alice"};
+console.log(user.address?.city);  // undefined (address doesn't exist)
+```
+
+### 7. Best Practices
+```javascript
+// Use undefined for default/missing values
+function greet(name = "Guest") {  // name is undefined if not provided
+    console.log(`Hello, ${name}`);
+}
+
+// Use null for intentional absence
+let selectedItem = null;  // Nothing selected yet
+
+function findUser(id) {
+    // Return null if not found
+    return users.find(u => u.id === id) || null;
+}
+
+// Check both with nullish coalescing
+let value = potentiallyNullOrUndefined ?? "default";
+
+// Use optional chaining
+let cityName = user?.address?.city ?? "Unknown";
+```""",
+        "reference": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null",
+        "points": 1,
+        "answers": [
+            {"text": "undefined is unassigned, null is intentional absence", "is_correct": True},
+            {"text": "They are the same", "is_correct": False},
+            {"text": "null is for numbers only", "is_correct": False},
+            {"text": "undefined is for objects only", "is_correct": False},
         ],
     },
 ]
