@@ -10,11 +10,11 @@ cmd = [
     "-c",
     (
         "source venv/bin/activate && "
-        "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+        "uvicorn main:app --host 0.0.0.0 --port 10000 --reload"
     ),
 ]
 
-print("Starting FastAPI server on http://localhost:8000")
+print("Starting FastAPI server on http://localhost:10000")
 print("Server logs will appear below:")
 print("-" * 50)
 

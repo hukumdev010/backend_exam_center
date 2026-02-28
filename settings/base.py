@@ -43,7 +43,7 @@ class Settings(BaseSettings):
         env="NEXTAUTH_URL")
     # API settings
     api_base_url: str = Field(
-        default="http://127.0.0.1:8000",
+        default="http://127.0.0.1:10000",
         env="API_BASE_URL")
     frontend_url: str = Field(
         default="http://127.0.0.1:3000",

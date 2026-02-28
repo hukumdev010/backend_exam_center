@@ -18,7 +18,7 @@ class AuthService:
     def __init__(self):
         self.google_client_id = os.getenv("GOOGLE_CLIENT_ID")
         self.google_client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
-        self.api_base_url = os.getenv('API_BASE_URL', 'http://localhost:8000')
+        self.api_base_url = os.getenv('API_BASE_URL', 'http://localhost:10000')
 
     def get_google_auth_url(self) -> GoogleAuthURL:
         """Generate Google OAuth2 authorization URL"""

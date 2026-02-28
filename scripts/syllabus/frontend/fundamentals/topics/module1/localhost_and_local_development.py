@@ -31,13 +31,13 @@ connects to a server running on your own machine.
 
 **Common localhost URLs**:
 - `http://localhost:3000` - React development server
-- `http://localhost:8000` - Django development server
+- `http://localhost:10000` - Django development server
 - `http://localhost:5000` - Flask development server
 - `http://127.0.0.1:3000` - Same as localhost:3000
 
 **Port Numbers**
 
-The number after the colon (like 3000, 8000) is the port. It's like a channel on your computer. You can run
+The number after the colon (like 3000, 10000) is the port. It's like a channel on your computer. You can run
 multiple servers simultaneously on different ports.
 
 **How It Works**
